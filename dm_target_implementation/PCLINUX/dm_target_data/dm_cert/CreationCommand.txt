@@ -1,0 +1,83 @@
+Creation du CA HARD_CO TR069 Client Generique
+---------------------------------------------
+
+Creation de la paire des cles RSA:
+openssl genrsa -des3 2048 > TR69GenericAgentRSA.key
+
+La passphrase est: tr69genericagent
+
+Creation du certificat CA
+openssl req -new -x509 -days 7300 -key TR69GenericAgentRSA.key > CA_TR69GenericAgent.crt
+
+
+
+
+Les commandes passées sont les suivantes:
+----------------------------------------
+(huam7374@r-lnx-huam7374)~/Travail_local/TR069_GENERIQUE/KARMA_SSL/HARDCO_CA$: openssl genrsa -des3 2048 > TR69GenericAgentRSA.key
+Generating RSA private key, 2048 bit long modulus
+........+++
+........................+++
+e is 65537 (0x10001)
+Enter pass phrase:
+Verifying - Enter pass phrase:
+(huam7374@r-lnx-huam7374)~/Travail_local/TR069_GENERIQUE/KARMA_SSL/HARDCO_CA$: openssl req -new -x509 -days 7300 -key TR69GenericAgentRSA.key > CA_TR69GenericAgent.crt
+Enter pass phrase for TR69GenericAgentRSA.key:
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [GB]:FR
+State or Province Name (full name) [Berkshire]:BRETAGNE
+Locality Name (eg, city) [Newbury]:CESSON
+Organization Name (eg, company) [My Company Ltd]:FranceTelecom
+Organizational Unit Name (eg, section) []:RD
+Common Name (eg, your name or your server's hostname) []:SHINE
+Email Address []:None
+
+
+Pour voir le contenu du certificat:
+----------------------------------
+openssl x509 -text -in CA_TR69GenericAgent.crt
+
+
+
+
+//------------------------
+Creation de la demande de certificat
+
+Creation de la cle RSA
+----------------------
+openssl genrsa 1024 > deviceKey.key
+
+Creation du ficher csr
+----------------------
+openssl req -new -key deviceKey.key > deviceCertificat.csr
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [GB]:FR
+State or Province Name (full name) [Berkshire]:BRETAGNE
+Locality Name (eg, city) [Newbury]:CESSON
+Organization Name (eg, company) [My Company Ltd]:FT
+Organizational Unit Name (eg, section) []:RD
+Common Name (eg, your name or your server's hostname) []:0016AE-TR69Generic-AG111111
+Email Address []:none
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:      --> Vide
+An optional company name []:  --> Vide
+
+
+
+// Signature
+
+openssl x509 -req -days 7300 -in deviceCertificat.csr -CA CA_TR69GenericAgent.crt -CAkey TR69GenericAgentRSA.key -CAcreateserial -out deviceCertificat.crt

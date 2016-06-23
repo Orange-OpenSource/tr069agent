@@ -1,0 +1,12 @@
+Support for SSL
+First you need a valid certificate to authentify ACS.
+you cant get a certificate by doing :
+$openssl s_client -connect ACS_hostname:port | tee logfile
+copy the text from --BEGIN CERTIFICATE -- to --END CERTIFICATE-- in a file 
+acs.pem, copy "acs.pem" in the "src" folder.
+The Common Name of the certificate must be the same as the hostname in the URL.
+ex : Common Name = r-lnx-idope then the URL to contact the ACS must be https://r-lnx-idope:port/xxxx
+this is a mechanism to authenticate the host.
+
+
+    

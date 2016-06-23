@@ -1,0 +1,66 @@
+#*---------------------------------------------------------------------------
+#* Project     : TR69 Generic Agent
+#* Sub-Project : CWMP - TR069
+#*
+#* Copyright (C) 2014 Orange
+#*
+#* This software is distributed under the terms and conditions of the 'Apache-2.0'
+#* license which can be found in the file 'LICENSE.txt' in this package distribution
+#* or at 'http://www.apache.org/licenses/LICENSE-2.0'.
+#*
+#*---------------------------------------------------------------------------
+#* File        : Makefile
+#*
+#* Created     : 12/07/2011
+#* Author      : 
+#*
+#*---------------------------------------------------------------------------
+#*/
+
+
+INCS = $(INCLUDE_DIR)
+
+REP_OBJ = $(LOCAL_DIR)/obj
+
+SOURCES = src/DM_IPC_DBusInterface.c
+
+ifeq ($(USE_DBUS_TEST), Y)
+  OBJETS  = $(REP_OBJ)/DM_IPC_DBusInterface.o $(REP_OBJ)/libTR069IpcInterface.so $(REP_OBJ)/DBusTest
+else
+  OBJETS  = $(REP_OBJ)/DM_IPC_DBusInterface.o $(REP_OBJ)/libTR069IpcInterface.so
+endif
+
+
+ifeq ($(DEBUG_COM_FLAG),1)
+	CFLAGS+= -DTESTU_COM_FLAG -g
+	LIBS += -L$(FTX_ROOT_SRC_DIR)/$(FTX_PKG_PREFIX_DIR)/lib -L$(FTX_ROOT_SRC_DIR)/$(FTX_PKG_PREFIX_DIR)/usr/lib
+endif
+
+all: $(OBJETS)
+
+
+$(REP_OBJ)/DM_IPC_DBusInterface.o: src/DM_IPC_DBusInterface.c
+	$(CC) -o $(REP_OBJ)/DM_IPC_DBusInterface.o $(CWMP_C_FLAGS) $(CWMP_CPP_FLAGS) $(INCS) -c src/DM_IPC_DBusInterface.c
+
+$(REP_OBJ)/DM_IPC_RPCInterface.o: src/DM_IPC_RPCInterface.c
+	$(CC) -o $(REP_OBJ)/DM_IPC_RPCInterface.o $(CWMP_C_FLAGS) $(CWMP_CPP_FLAGS) $(INCS) -c src/DM_IPC_RPCInterface.c
+
+$(REP_OBJ)/DM_ENG_Common.o: ../dm_engine/src/DM_ENG_Common.c
+	$(CC) -o $(REP_OBJ)/DM_ENG_Common.o $(CWMP_C_FLAGS) $(CWMP_CPP_FLAGS) $(INCS) -c ../dm_engine/src/DM_ENG_Common.c
+
+$(REP_OBJ)/DM_ENG_ParameterValueStruct.o: ../dm_engine/src/DM_ENG_ParameterValueStruct.c
+	$(CC) -o $(REP_OBJ)/DM_ENG_ParameterValueStruct.o $(CWMP_C_FLAGS) $(CWMP_CPP_FLAGS) $(INCS) -c ../dm_engine/src/DM_ENG_ParameterValueStruct.c
+
+$(REP_OBJ)/DM_ENG_SetParameterValuesFault.o: ../dm_engine/src/DM_ENG_SetParameterValuesFault.c
+	$(CC) -o $(REP_OBJ)/DM_ENG_SetParameterValuesFault.o $(CWMP_C_FLAGS) $(CWMP_CPP_FLAGS) $(INCS) -c ../dm_engine/src/DM_ENG_SetParameterValuesFault.c
+
+$(REP_OBJ)/libTR069IpcInterface.so: $(REP_OBJ)/DM_IPC_RPCInterface.o $(REP_OBJ)/DM_ENG_Common.o $(REP_OBJ)/DM_ENG_ParameterValueStruct.o $(REP_OBJ)/DM_ENG_SetParameterValuesFault.o
+	$(CC) -shared -Wl,-soname,libTR069IpcInterface.so -o $(REP_OBJ)/libTR069IpcInterface.so $(REP_OBJ)/DM_ENG_Common.o $(REP_OBJ)/DM_ENG_ParameterValueStruct.o $(REP_OBJ)/DM_ENG_SetParameterValuesFault.o $(REP_OBJ)/DM_IPC_RPCInterface.o -ldbus-1
+
+ifeq ($(USE_DBUS_TEST), Y)
+$(REP_OBJ)/DBusTest : src/DM_IPC_DBusTest.c $(REP_OBJ)/libTR069IpcInterface.so
+	$(CC) -o $(REP_OBJ)/DBusTest $(CWMP_C_FLAGS) $(CWMP_CPP_FLAGS) $(INCS) src/DM_IPC_DBusTest.c $(REP_OBJ)/libTR069IpcInterface.so
+endif
+
+clean:
+	rm -f $(REP_OBJ)/*.o $(REP_OBJ)/libTR069IpcInterface.so $(REP_OBJ)/DBusTest

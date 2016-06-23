@@ -1,0 +1,29 @@
+#
+# This file is used by the Device Adpter to Set/Get Parameters values
+# This file must be updated with your own parameters values and new
+# parameters can be added (Note: All the parameters declared in the 
+# parameter.csv file as System_Only or Mixed must be declared in this file)
+#
+DeviceInfo.Manufacturer "myManufacturer"
+DeviceInfo.ManufacturerOUI "myOUI"
+DeviceInfo.ProductClass "myProductClass"
+DeviceInfo.SerialNumber "AG111111"
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress "myIpAddress"
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress "myMacAddress"
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username "myClientUsername"
+DeviceSummary "myDeviceSummary"
+DeviceInfo.HardwareVersion "myHwVersion"
+DeviceInfo.SoftwareVersion "mySwVersion"
+DeviceInfo.ProvisioningCode ""
+DeviceInfo.SpecVersion "mySpecVersion"
+ManagementServer.ConnectionRequestPassword "orange"
+LANDevice.1.Hosts.Host.1.MACAddress "myMacAddress"
+# Below are NO DATAMODEL PATH
+# Next software version to use after a successful download
+NextSoftwareVersionAfterDownloadSuccess "mySwVersionAfterDownload"
+# OUI to send in a X INFORM request by the end user
+X_OUI_INFORM "OuiforXInform"
+# EVENT to send in a X INFORM request by the end user
+X_EVENT_INFORM "EventforXInform"
+# TargetFile Name to store the downloaded file (when no file name provided)
+TargetFileName "/tmp/myTargetFileName"

@@ -1,0 +1,61 @@
+#
+# CSV Configuration File
+# ParameterName;TYPE;STORAGE_MODE;ACCESS_MODE;IMMEDIATE_CHANGE;NOTIFICATION;MANDATORY_NOTIF;NOTIFICATION_DENIED;ACCESS_LIST;DEFAULT_VALUE
+# TYPE                --> ANY, STRING, UINT, INT, BOOLEAN
+# STORAGE_MODE        --> 0 TR069, 1 System, 2 Mixed
+# ACCESS_MODE         --> 0 Read Only, 1 RW
+# IMMEDIATE_CHANGE    --> 0 No (after reboot), 1 Yes
+# NOTIFICATION        --> 0 No Notification, 1 Passive, 2 Active
+# MANDATORY_NOTIF     --> 0 No, 1 Yes
+# NOTIFICATION_DENIED --> 0 No, 1 Yes
+# ACCESS_LIST         --> 
+# DEFAULT_VALUE       --> The Default value
+#
+# NOTE: When STUN is used, active notification must be enabled on the following parameters:
+#     ManagementServer.ConnectionRequestUsername
+#     ManagementServer.Password
+#     ManagementServer.STUNEnable
+#     ManagementServer.STUNServerAddress
+#     ManagementServer.STUNServerPort
+#     ManagementServer.NATDetected
+#     ManagementServer.UDPConnectionRequestAddress
+# 
+
+;ANY;0;0;0;0;0;0;;;0;0
+DeviceSummary;STRING;2;0;0;0;1;0;;;0;0
+DeviceInfo.;ANY;0;0;0;0;0;0;;;0;0
+DeviceInfo.Manufacturer;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.ManufacturerOUI;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.ProductClass;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.SerialNumber;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.HardwareVersion;STRING;1;0;0;1;1;0;;;0;0
+DeviceInfo.SoftwareVersion;STRING;1;0;0;2;1;0;;;0;0
+DeviceInfo.ProvisioningCode;STRING;1;1;1;1;1;0;;;0;0
+DeviceInfo.DeviceStatus;STRING;2;1;0;0;0;0;;;0;0
+DeviceInfo.SpecVersion;STRING;1;0;0;0;1;0;;1.1;0;0
+ManagementServer.;ANY;0;0;0;0;0;0;;;0;0
+ManagementServer.URL;STRING;0;1;1;2;0;0;;http://my.acs.url/tr69;0;0
+ManagementServer.Username;STRING;0;1;1;2;0;0;;;0;0
+ManagementServer.Password;STRING;0;1;1;2;0;0;;;0;0
+ManagementServer.ParameterKey;STRING;0;1;1;2;1;0;;;0;0
+ManagementServer.PeriodicInformEnable;BOOLEAN;0;1;1;2;0;0;;1;0;0
+ManagementServer.PeriodicInformInterval;UINT;0;1;1;2;0;0;;3600;0;0
+ManagementServer.PeriodicInformTime;DATE;0;1;0;0;0;0;;;0;0
+ManagementServer.ConnectionRequestURL;STRING;1;0;0;0;1;0;;;0;0
+ManagementServer.ConnectionRequestUsername;STRING;2;1;1;0;0;0;;;0;0
+ManagementServer.ConnectionRequestPassword;STRING;2;1;1;0;0;0;;;0;0
+ManagementServer.X_ORANGE-COM_MaxConnectionRequest;UINT;0;1;1;2;0;0;;50;0;0
+ManagementServer.X_ORANGE-COM_FreqConnectionRequest;UINT;0;1;1;2;0;0;;3600;0;0
+ManagementServer.X_ORANGE-COM_WIFIComm.Active;BOOLEAN;2;1;0;0;0;0;;0;0;0
+ManagementServer.UDPConnectionRequestAddress;STRING;0;0;1;2;1;0;;0;0;0
+ManagementServer.UDPConnectionRequestAddressNotificationLimit;UINT;0;1;0;0;0;0;;0;0;0
+ManagementServer.STUNEnable;BOOLEAN;0;1;0;0;1;0;;1;0;0
+ManagementServer.STUNServerAddress;STRING;0;1;0;0;1;0;;;0;0
+ManagementServer.STUNServerPort;INT;0;1;0;0;1;0;;;0;0
+ManagementServer.STUNUsername;STRING;0;1;0;0;0;0;;test;0;0
+ManagementServer.STUNPassword;STRING;0;1;0;0;0;0;;1234;0;0
+ManagementServer.STUNMaximumKeepAlivePeriod;INT;0;1;0;0;0;0;;400;0;0
+ManagementServer.STUNMinimumKeepAlivePeriod;UINT;0;1;0;0;0;0;;10;0;0
+ManagementServer.NATDetected;BOOLEAN;0;0;1;2;1;0;;0;0;0
+LAN.IPAddress;STRING;1;0;0;0;0;0;;;0;0
+LANDevice.1.Hosts.Host.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0

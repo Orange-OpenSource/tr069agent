@@ -1,0 +1,63 @@
+#
+# CSV Configuration File
+# ParameterName;TYPE;STORAGE_MODE;ACCESS_MODE;IMMEDIATE_CHANGE;NOTIFICATION;MANDATORY_NOTIF;NOTIFICATION_DENIED;ACCESS_LIST;DEFAULT_VALUE
+# TYPE                --> ANY, STRING, UINT, INT, BOOLEAN
+# STORAGE_MODE        --> 0 TR069, 1 System, 2 Mixed
+# ACCESS_MODE         --> 0 Read Only, 1 RW
+# IMMEDIATE_CHANGE    --> 0 No (after reboot), 1 Yes
+# NOTIFICATION        --> 0 No Notification, 1 Passive, 2 Active
+# MANDATORY_NOTIF     --> 0 No, 1 Yes
+# NOTIFICATION_DENIED --> 0 No, 1 Yes
+# ACCESS_LIST         --> 
+# DEFAULT_VALUE       --> The Default value
+#
+;ANY;0;0;0;0;0;0;;;0;0
+DeviceSummary;STRING;2;0;0;0;1;0;;;0;0
+DeviceInfo.;ANY;0;0;0;0;0;0;;;0;0
+DeviceInfo.Manufacturer;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.ManufacturerOUI;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.ProductClass;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.SerialNumber;STRING;1;0;0;0;0;0;;;0;0
+DeviceInfo.HardwareVersion;STRING;1;0;0;1;1;0;;;0;0
+DeviceInfo.SoftwareVersion;STRING;1;0;0;2;1;0;;;0;0
+DeviceInfo.ProvisioningCode;STRING;1;1;1;1;1;0;;;0;0
+DeviceInfo.DeviceStatus;STRING;2;1;0;0;0;0;;;0;0
+DeviceInfo.SpecVersion;STRING;1;0;0;0;1;0;;1.1;0;0
+ManagementServer.;ANY;0;0;0;0;0;0;;;0;0
+ManagementServer.URL;STRING;0;1;1;2;0;0;;http://my.acs.url/tr69;0;0
+ManagementServer.Username;STRING;0;1;1;2;0;0;;;0;0
+ManagementServer.Password;STRING;0;1;1;2;0;0;;;0;0
+ManagementServer.ParameterKey;STRING;0;1;1;2;1;0;;;0;0
+ManagementServer.PeriodicInformEnable;BOOLEAN;0;1;1;2;0;0;;1;0;0
+ManagementServer.PeriodicInformInterval;UINT;0;1;1;2;0;0;;3600;0;0
+ManagementServer.PeriodicInformTime;DATE;0;1;0;0;0;0;;;0;0
+ManagementServer.ConnectionRequestURL;STRING;1;0;0;0;1;0;;;0;0
+ManagementServer.ConnectionRequestUsername;STRING;2;1;1;0;0;0;;;0;0
+ManagementServer.ConnectionRequestPassword;STRING;2;1;1;0;0;0;;;0;0
+ManagementServer.X_ORANGE-COM_MaxConnectionRequest;UINT;0;1;1;2;0;0;;50;0;0
+ManagementServer.X_ORANGE-COM_FreqConnectionRequest;UINT;0;1;1;2;0;0;;3600;0;0
+ManagementServer.X_ORANGE-COM_WIFIComm.Active;BOOLEAN;2;1;0;0;0;0;;0;0;0
+WANDevice.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress;STRING;2;0;0;2;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Name;STRING;2;0;0;2;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Username;STRING;1;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress;STRING;2;0;0;2;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Name;STRING;2;0;0;2;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username;STRING;1;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANDSLLinkConfig.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANConnectionDevice.1.WANDSLLinkConfig.LinkType;STRING;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANDSLInterfaceConfig.;ANY;0;0;0;0;0;0;;;0;0
+WANDevice.1.WANDSLInterfaceConfig.UpstreamNoiseMargin;INT;0;0;0;0;0;1;;;0;0
+WANDevice.1.WANDSLInterfaceConfig.DownstreamNoiseMargin;INT;0;0;0;0;0;1;;;0;0
+WANDevice.1.WANDSLInterfaceConfig.UpstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
+WANDevice.1.WANDSLInterfaceConfig.DownstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
+WANDevice.1.WANDSLInterfaceConfig.UpstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
+WANDevice.1.WANDSLInterfaceConfig.DownstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
+LANDevice.1.Hosts.Host.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
