@@ -54,6 +54,10 @@ CC = gcc -fno-stack-protector
 # NAME OF THE GENERATED APPLICATION
 CWMP_APPLICATION_NAME = cwmpd
 
+# OBJ DIR LOCATION
+REP_OBJ = $(LOCAL_DIR)/obj
+
+
 # DECLARE ALL THE INCLUDE PATH FOR USED LIBRARY HEADERS(cwmp application headers)
 ifeq ($(DBUS_IPC_ENABLE), Y)
   LIB_HEADER_INC = -I/usr/local/include $(shell pkg-config --cflags-only-I dbus-1)
@@ -182,6 +186,7 @@ dm_target_nat_stun            = dm_target_implementation/$(TargetName)/dm_target
 all:	$(CWMP_APPLICATION_NAME)
 	
 $(CWMP_APPLICATION_NAME):
+	mkdir -p $(REP_OBJ)
 	echo $(dm_target_com_path)
 	(cd dm_com && $(MAKE))
 ifeq ($(DBUS_IPC_ENABLE), Y)
@@ -215,6 +220,7 @@ clean :
 ifeq ($(STUN_ENABLE), Y)
 	($(MAKE) -C $(dm_target_nat_stun) $@)
 endif
+	rm -rf $(REP_OBJ)
 
 distclean :
 	@(cd dm_com && $(MAKE) $@)
