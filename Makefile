@@ -191,7 +191,7 @@ dm_target_dataManagement_path = dm_target_implementation/$(TargetName)/dm_target
 dm_target_main_path           = dm_target_implementation/$(TargetName)/dm_target_main/
 
 dm_target_nat_stun            = dm_target_implementation/$(TargetName)/dm_target_nat/stun/
-dm_target_nat_igd            = dm_target_implementation/$(TargetName)/dm_target_nat/igd/
+dm_target_nat_upnpigd            = dm_target_implementation/$(TargetName)/dm_target_nat/upnpigd/
 
 all:	$(CWMP_APPLICATION_NAME)
 	
@@ -214,7 +214,7 @@ ifeq ($(STUN_ENABLE), Y)
 endif
 
 ifeq ($(IGD_ENABLE), Y)
-	($(MAKE) -C $(dm_target_nat_igd) all)
+	($(MAKE) -C $(dm_target_nat_upnpigd) all)
 endif
 	
 	(cd $(dm_target_main_path) && $(MAKE))
@@ -238,7 +238,7 @@ ifeq ($(STUN_ENABLE), Y)
 endif
 
 ifeq ($(IGD_ENABLE), Y)
-	($(MAKE) -C $(dm_target_nat_igd) $@)
+	($(MAKE) -C $(dm_target_nat_upnpigd) $@)
 endif
 	
 	rm -rf $(REP_OBJ)
