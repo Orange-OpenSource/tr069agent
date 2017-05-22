@@ -14,7 +14,7 @@ DeviceInfo.SoftwareVersion "SV1.0.5"
 DeviceInfo.ProvisioningCode "provisioning12345"
 DeviceInfo.SpecVersion "1.0"
 
-ManagementServer.ConnectionRequestPassword "cRP#jgbx5057"
+ManagementServer.ConnectionRequestPassword "tinkPassCR"
 
 WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress "10.194.58.69"
 WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Username "myIPClientUsername"
