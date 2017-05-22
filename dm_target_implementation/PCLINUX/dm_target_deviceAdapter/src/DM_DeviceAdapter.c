@@ -174,13 +174,6 @@ static DM_CMN_Mutex_t _mutexDownloadThread = NULL;
 static bool      _downloadThreadInProgress = false; // Indicate if a download thread is running.
 
 
-// variables for upnpDiscoverIGD()
-const char * multicastif = 0;
-const char * minissdpdpath = 0;
-static int ipv6 = 0;
-static unsigned char ttl = 2;
-static int error = 0;
-
 /* -------------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------------- */
 /* ------                IMPLEMENTATION OF DM_ENG_Device.h routines           ----- */
@@ -351,7 +344,6 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       strcat(*pVal, productClassStr);
       strcat(*pVal, "-");
       strcat(*pVal, serialNumberStr);
-
     }
 
   } else if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestURL")) {
@@ -362,10 +354,31 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
     // If not, get current ip address for ConnectionRequestURL
 
     // First check Scenario Behind a gateway
+    // variables for upnpDiscoverIGD
+  	const char * multicastif = 0;
+  	const char * minissdpdpath = 0;
+  	int ipv6 = 0;
+  	unsigned char ttl = 2;
+  	int error = 0;
     //struct for Discover results
     struct UPNPDev * devlist = 0;
     struct UPNPDev * dev;
-    int i;
+    // variables for UPNP_GetValidIGD()
+    struct UPNPUrls urls;
+    struct IGDdatas data;
+    char lanaddr[40] = "unset";	/* ip address on the LAN */
+    // variables for GetExternalIPAddress()
+    char extIpAddr[40];
+    // variables for AddAnyPortMapping
+    char  reservedPort [6];
+    char * remoteHost = NULL;
+    char extPort[6] = "7547";
+    char inPort[6] = "50805";
+    char * proto = "TCP";
+    char leaseDuration[16]= "3600";
+
+    int i,ret;
+
     // discover if exist WANIPConnection 1/2 or WANPPPConnection:1
     DBG("searching UPnP IGD devices, especially WANIPConnection and WANPPPConnection");
     devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
@@ -378,54 +391,53 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
         DBG("Found device %3d: %-48s\n", i, dev->st);
 
-        // variables for UPNP_GetValidIGD()
-        struct UPNPUrls urls;
-        struct IGDdatas data;
-        char lanaddr[64] = "unset";	/* ip address on the LAN */
         // get more information from descURL using UPNP_GetValidIGD
         // return of state: -1 internal error, 0 no IGD found, 1 valid connected IGD found,
         // 2 valid IGD found but not connected, 3 UPnP device found but not recognized as IGD
         int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
         if (state == 1) {
           DBG("local LAN IP Address is %s", lanaddr);
-          char extIpAddr[16];
           int ext = UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, extIpAddr);
           if (ext == 0){
             DBG("External IP Address of this network is %s", extIpAddr);
             // start port mapping here
             DBG("Start port mapping");
-            // parameters for AddAnyPortMapping
-            char  reservedPort [5];
-            char * remoteHost = NULL;
-            //char* sCpePort = DM_ENG_intToString(CPE_PORT);
-            char * extPort = "7547";
-            //CPE_PORT is 50805, tr069agent is listening on this port, internal port for port mapping should always be CPE_PORT
-            char * inPort = DM_ENG_intToString(CPE_PORT);
-            char * proto = "TCP";  // tr069agent service is listening on port CPE_PORT using protocol TCP. protocol UDP not working.
-            int ret;
+
             // WANIPConnection and WANPPPConnection should be different
-            // WANIPConnection:2 should use AddAnyPortMapping (not sure about WANIPConnection:1)
-            if ((strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:2") == 0 )){
+            // WANIPConnection:2 should use AddAnyPortMapping
+            if (0 == strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:2")){
               ret = UPNP_AddAnyPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
                                    extPort,
                                    inPort,
                                    lanaddr /*intClient*/,
-                                   "test add any port mapping" /*desc*/,
+                                   "WANIPConnection v2 addanyportmapping" /*desc*/,
                                    proto /*proto UPPERCASE*/,
                                    remoteHost /*remoteHost*/,
-                                   "3600" /*leaseDuration*/,
+                                   leaseDuration /*leaseDuration*/,
                                    reservedPort /*reservedPort*/);
-            } else if (strcmp(dev->st, "urn:schemas-upnp-org:service:WANPPPConnection:1") == 0 || (strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:1") == 0 )){
+            } else if (0 == strcmp(dev->st, "urn:schemas-upnp-org:service:WANPPPConnection:1")){
+
+
               ret = UPNP_AddPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
                                    extPort,
                                    inPort,
                                    lanaddr /*intClient*/,
-                                   "test PPPConnection addportmapping" /*desc*/,
+                                   "WANPPPConnection v1 addportmapping" /*desc*/,
                                    proto /*proto UPPERCASE*/,
                                    remoteHost /*remoteHost*/,
-                                   "3600" /*leaseDuration*/);
+                                   leaseDuration /*leaseDuration*/);
              strcpy(reservedPort,extPort);
-            }
+           } else if (0 == strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:1")){
+             ret = UPNP_AddPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+                                  extPort,
+                                  inPort,
+                                  lanaddr /*intClient*/,
+                                  "WANIPConnection v1 addportmapping" /*desc*/,
+                                  proto /*proto UPPERCASE*/,
+                                  remoteHost /*remoteHost*/,
+                                  leaseDuration /*leaseDuration*/);
+            strcpy(reservedPort,extPort);
+           }
 
             // UPNPCOMMAND_SUCCESS is 0, defined in minupnpc.h
             if (ret == UPNPCOMMAND_SUCCESS){
