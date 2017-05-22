@@ -5,13 +5,13 @@
  *
  * This software is distributed under the terms and conditions of the 'Apache-2.0'
  * license which can be found in the file 'LICENSE.txt' in this package distribution
- * or at 'http://www.apache.org/licenses/LICENSE-2.0'. 
+ * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
  * File        : DM_SystemCalls.h
  *
  * Created     : 22/05/2008
- * Author      : 
+ * Author      :
  *
  *---------------------------------------------------------------------------
  * $Id$
@@ -24,7 +24,7 @@
 /**
  * @file DM_SystemCalls.h
  *
- * @brief 
+ * @brief
  *
  **/
 
@@ -37,6 +37,7 @@
 
 void DM_SystemCalls_reboot(bool factoryReset);
 char* DM_SystemCalls_getIPAddress(); // Attention, the value is not copied !
+char* DM_SystemCalls_getMACAddress(); 
 char* DM_SystemCalls_getSystemData(const char* name, const char* data); // Attention, the value IS copied !
 bool DM_SystemCalls_getSystemObjectData(const char* objName, OUT DM_ENG_ParameterValueStruct** pParamVal[]);
 bool DM_SystemCalls_setSystemData(const char* name, const char* value);

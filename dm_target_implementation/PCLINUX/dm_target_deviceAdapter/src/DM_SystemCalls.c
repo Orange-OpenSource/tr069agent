@@ -5,13 +5,13 @@
  *
  * This software is distributed under the terms and conditions of the 'Apache-2.0'
  * license which can be found in the file 'LICENSE.txt' in this package distribution
- * or at 'http://www.apache.org/licenses/LICENSE-2.0'. 
+ * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
  * File        : DM_SystemCalls.c
  *
  * Created     : 22/05/2008
- * Author      : 
+ * Author      :
  *
  *---------------------------------------------------------------------------
  * $Id$
@@ -24,7 +24,7 @@
 /**
  * @file DM_SystemCalls
  *
- * @brief 
+ * @brief
  *
  **/
 
@@ -33,6 +33,7 @@
 #include "CMN_Trace.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef WIN32
 #include <sys/socket.h>
@@ -41,11 +42,13 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#include <netpacket/packet.h>
 #endif
 
 extern char* ETH_INTERFACE;
 
 static char* ipAddress = NULL;
+static char* macAddress = NULL;
 //static const char* DOWNLOAD_WEB_DIR = "../Download/";
 static const char* LOG_DIR = "/var/log/adm/";
 
@@ -96,7 +99,7 @@ char* DM_SystemCalls_getIPAddress()
       else
       {
          DBG("Retrieving IP Address : %s", ipAddress);
-      }      
+      }
 #else
       struct ifaddrs *myaddrs = NULL, *ifa = NULL;
       struct sockaddr_in *s4 = NULL;
@@ -131,12 +134,59 @@ char* DM_SystemCalls_getIPAddress()
       else
       {
          DBG("Retrieving IP Address : %s", ipAddress);
-      }      
+      }
 
       freeifaddrs(myaddrs);
 #endif
    }
    return ipAddress;
+}
+
+/**
+ * Returns the MAC Address.
+ *
+ *
+ * @return Returns the MAC Address or NULL if not found.
+ */
+char* DM_SystemCalls_getMACAddress()
+{
+  if (macAddress == NULL)
+  {
+    struct ifaddrs *myaddrs=NULL, *ifa = NULL;
+    struct sockaddr_ll *s4 = NULL;
+    int status;
+
+    char buf[18];
+    memset((void *) buf,  0x00, sizeof(buf));
+
+    status = getifaddrs(&myaddrs);
+    if (status == 0)
+    {
+         for ( ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next)
+         {
+            if ( (strcmp(ifa->ifa_name, ETH_INTERFACE)==0)  && (ifa->ifa_addr->sa_family == AF_PACKET) )
+             {
+				          s4 = (struct sockaddr_ll *)(ifa->ifa_addr);
+				          snprintf(buf,sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x", s4->sll_addr[0],s4->sll_addr[1],
+                                            s4->sll_addr[2], s4->sll_addr[3],s4->sll_addr[4],s4->sll_addr[5]);
+                  macAddress = strdup(buf);
+                  break;
+              }
+         }
+    }
+    if (macAddress == NULL)
+    {
+       WARN("MAC Address not found. Is '%s' the good interface ?", ETH_INTERFACE);
+    }
+    else
+    {
+       DBG("Retrieving MAC Address : %s", macAddress);
+       DBG("(systemcall) pointer points to address: %u", macAddress);
+    }
+
+    freeifaddrs(myaddrs);
+  }
+	return macAddress;
 }
 
 void DM_SystemCalls_freeSessionData()
@@ -196,7 +246,7 @@ bool DM_SystemCalls_setSystemData(const char* name UNUSED, const char* value UNU
 
 /**
  * Performs a ping test.
- * 
+ *
  * @param host
  * @param numberOfRepetitions
  * @param timeout
@@ -229,7 +279,7 @@ int DM_SystemCalls_ping(char* host, int numberOfRepetitions, long timeout, unsig
    {
       char* token[4];
       int len = strlen(buf);
-      int c = 0; // index caractère
+      int c = 0; // index caractï¿½re
       int i = 0; // index parametre
       char* rttPrefix = "rtt min/avg/max/mdev = ";
       if (strncmp(buf, rttPrefix, strlen(rttPrefix))==0)
@@ -262,7 +312,7 @@ int DM_SystemCalls_ping(char* host, int numberOfRepetitions, long timeout, unsig
 
 /**
  * Performs a traceroute test.
- * 
+ *
  * @param host
  * @param timeout
  * @param dataBlockSize
@@ -297,7 +347,7 @@ int DM_SystemCalls_traceroute(char* host, long timeout, int dataBlockSize, int m
       moy = 0;
       char* token[10];
       int len = strlen(buf);
-      int c = 0; // index caractère
+      int c = 0; // index caractï¿½re
       int i = 0; // index parametre
       char* traceroutePrefix = "traceroute";
       if (strncmp(buf, traceroutePrefix, strlen(traceroutePrefix))==0) { continue; }
@@ -312,7 +362,7 @@ int DM_SystemCalls_traceroute(char* host, long timeout, int dataBlockSize, int m
       if (i<9) { continue; }
 
       double t1 = atof(token[3]); // ou strtod( token[3], &end );
-      if (t1 == 0) continue; // ds ce cas, token[3] n'est pas numérique (sinon nécessairement > 0) car pas de réponse de la gateway (token "*")
+      if (t1 == 0) continue; // ds ce cas, token[3] n'est pas numï¿½rique (sinon nï¿½cessairement > 0) car pas de rï¿½ponse de la gateway (token "*")
       double t2 = atof(token[5]);
       if (t2 == 0) continue;
       double t3 = atof(token[7]);
@@ -339,7 +389,7 @@ int DM_SystemCalls_traceroute(char* host, long timeout, int dataBlockSize, int m
 
 /**
  * Performs a file download.
- * 
+ *
  * @param fileType
  * @param url
  * @param username
@@ -354,7 +404,7 @@ int DM_SystemCalls_download(char* fileType, char* url, char* username, char* pas
    char buf[200];
    int  nType;
    char *pStrPath[] = { "/tmp/adm/", "/root/OpenSTB/browser/demo/mosaic/", "" };
-   
+
    // --> downloadExecDM_SystemCalls_download: type = '2' DM_SystemCalls_download: cmd = 'wget -o /var/log/adm/log.txt --ftp-user=cwmp --ftp-password=cwmp -O mosaic_jb.htm ftp://192.168.1.5/mosaic_jb.htm'
 
    nType = atoi( fileType );
@@ -382,6 +432,6 @@ int DM_SystemCalls_download(char* fileType, char* url, char* username, char* pas
    }
    printf( "\nDM_SystemCalls_download: cmd = '%s' ", buf );
    system( buf );
-   
+
    return 0;
 }
