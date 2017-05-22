@@ -43,6 +43,9 @@
 #include "DM_COM_GenericHttpClientInterface.h" // Required for HTTP GET FILE Example
 #include "DM_CMN_Thread.h"
 
+#include "miniupnpc.h"
+#include "dm_igd.h"
+
 #ifndef WIN32
 #include <linux/unistd.h> // To get the current working directory getcwd()
 #endif
@@ -127,6 +130,8 @@ static bool _downloadCompletedSuccessfully = false; // Flag to indicate if the N
 #define DEFAULT_X_OUI_INFORM   "001349"         // Default value to use when no value is retrieved
 #define DEFAULT_X_EVENT_INFORM "GUI"            // Default value to use when no value is retrieved
 #define WAN_IP_ADDRESS_KEY     "WAN.IPAddress"  // To retreive the WAN IP Address, if it is set in the DeviceInterfaceStubFile
+#define LAN_IP_ADDRESS_KEY    "LAN.IPAddress" // To retreive the LAN IP Address, if it is set in the DeviceInterfaceStubFile
+#define LAN_MAC_ADDRESS_KEY    "LAN.MACAddress" // To retreive the LAN MAC Address, if it is set in the DeviceInterfaceStubFile
 
 typedef struct infoStruct {
 char * paramNameStr;
@@ -167,6 +172,14 @@ static void   _testAction();
 // not used at the same time by two threads)
 static DM_CMN_Mutex_t _mutexDownloadThread = NULL;
 static bool      _downloadThreadInProgress = false; // Indicate if a download thread is running.
+
+
+// variables for upnpDiscoverIGD()
+const char * multicastif = 0;
+const char * minissdpdpath = 0;
+static int ipv6 = 0;
+static unsigned char ttl = 2;
+static int error = 0;
 
 /* -------------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------------- */
@@ -344,27 +357,131 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
   } else if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestURL")) {
     DBG("BUILD ConnectionRequestURL");
 
-    // Build the Connection Request URL http://IPAddress:50805/16random
-    char* ipAddressStr = _retrieveValueFromInfoList(WAN_IP_ADDRESS_KEY);
-    if (NULL == ipAddressStr)
-    {
-       ipAddressStr = DM_SystemCalls_getIPAddress();
-    }
-    if(NULL == ipAddressStr) {
+// First check if tr069agent is behind a IGD enabled gateway
+    // If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
+    // If not, get current ip address for ConnectionRequestURL
 
-    } else {
-      char* sCpePort = DM_ENG_intToString(CPE_PORT);
-      strSize = strlen("http://") + strlen(ipAddressStr) + strlen(sCpePort) + 20;
-      *pVal = (char*)malloc(strSize);
-      memset((void *) *pVal, 0x00, strSize);
-      strcpy(*pVal,  "http://");
-      strcat(*pVal, ipAddressStr);
-      strcat(*pVal, ":");
-      strcat(*pVal, sCpePort);
-      strcat(*pVal, "/");
-      strcat(*pVal, g_randomCpeUrl);
-      free(sCpePort);
+    // First check Scenario Behind a gateway
+    //struct for Discover results
+    struct UPNPDev * devlist = 0;
+    struct UPNPDev * dev;
+    int i;
+    // discover if exist WANIPConnection 1/2 or WANPPPConnection:1
+    DBG("searching UPnP IGD devices, especially WANIPConnection and WANPPPConnection");
+    devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
+                             0/*localport*/, ipv6, ttl, &error);
+
+    if (devlist) {
+      // here needs to check how many connections found. Ideally only one connection found, either IPConnection or PPPConnection.
+      // But IPConnection could have two types: IPConnection:1 or IPConnection:2
+      // Is it possible to have both these two IPConnection on the same device?
+      for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
+        DBG("Found device %3d: %-48s\n", i, dev->st);
+
+        // variables for UPNP_GetValidIGD()
+        struct UPNPUrls urls;
+        struct IGDdatas data;
+        char lanaddr[64] = "unset";	/* ip address on the LAN */
+        // get more information from descURL using UPNP_GetValidIGD
+        // return of state: -1 internal error, 0 no IGD found, 1 valid connected IGD found,
+        // 2 valid IGD found but not connected, 3 UPnP device found but not recognized as IGD
+        int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
+        if (state == 1) {
+          DBG("local LAN IP Address is %s", lanaddr);
+          char extIpAddr[16];
+          int ext = UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, extIpAddr);
+          if (ext == 0){
+            DBG("External IP Address of this network is %s", extIpAddr);
+            // start port mapping here
+            DBG("Start port mapping");
+            // parameters for AddAnyPortMapping
+            char  reservedPort [5];
+            char * remoteHost = NULL;
+            //char* sCpePort = DM_ENG_intToString(CPE_PORT);
+            char * extPort = "7547";
+            //CPE_PORT is 50805, tr069agent is listening on this port, internal port for port mapping should always be CPE_PORT
+            char * inPort = DM_ENG_intToString(CPE_PORT);
+            char * proto = "TCP";  // tr069agent service is listening on port CPE_PORT using protocol TCP. protocol UDP not working.
+            int ret;
+            // WANIPConnection and WANPPPConnection should be different
+            // WANIPConnection:2 should use AddAnyPortMapping (not sure about WANIPConnection:1)
+            if ((strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:2") == 0 )){
+              ret = UPNP_AddAnyPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+                                   extPort,
+                                   inPort,
+                                   lanaddr /*intClient*/,
+                                   "test add any port mapping" /*desc*/,
+                                   proto /*proto UPPERCASE*/,
+                                   remoteHost /*remoteHost*/,
+                                   "3600" /*leaseDuration*/,
+                                   reservedPort /*reservedPort*/);
+            } else if (strcmp(dev->st, "urn:schemas-upnp-org:service:WANPPPConnection:1") == 0 || (strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:1") == 0 )){
+              ret = UPNP_AddPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+                                   extPort,
+                                   inPort,
+                                   lanaddr /*intClient*/,
+                                   "test PPPConnection addportmapping" /*desc*/,
+                                   proto /*proto UPPERCASE*/,
+                                   remoteHost /*remoteHost*/,
+                                   "3600" /*leaseDuration*/);
+             strcpy(reservedPort,extPort);
+            }
+
+            // UPNPCOMMAND_SUCCESS is 0, defined in minupnpc.h
+            if (ret == UPNPCOMMAND_SUCCESS){
+              DBG("Create port mapping success");
+              DBG("reserved external port is %s", reservedPort);
+
+              // build ConnnectionRequestURL here
+              strSize = strlen("http://") + strlen(extIpAddr) + strlen(reservedPort) + 20;
+              *pVal = (char*)malloc(strSize);
+              memset((void *) *pVal, 0x00, strSize);
+              strcpy(*pVal,  "http://");
+              strcat(*pVal, extIpAddr);
+              strcat(*pVal, ":");
+              strcat(*pVal, reservedPort);
+              strcat(*pVal, "/");
+              strcat(*pVal, g_randomCpeUrl);
+            }
+            else {
+              DBG("Port Mapping not success! Error %d!", ret);
+            }/*if ret */
+          }
+          else {
+            DBG("GetExternalIPAddress Error %d!",ext);
+          }/*if ext*/
+        }
+        else {
+          DBG("Not valid and connected device found!  Error %d!",state);
+        }/*if state */
+      }
+      freeUPNPDevlist(devlist);
     }
+    else {
+      // Build the Connection Request URL http://IPAddress:50805/16random
+      // IP address retrived from system call, if not success, retrive from DeviceInterfaceStubFile
+      char* ipAddressStr = DM_SystemCalls_getIPAddress();
+      if (NULL == ipAddressStr)
+      {
+         ipAddressStr = _retrieveValueFromInfoList(LAN_IP_ADDRESS_KEY);
+      }
+      if(NULL == ipAddressStr) {
+
+      } else {
+        char* sCpePort = DM_ENG_intToString(CPE_PORT); //CPE_PORT is 50805
+        strSize = strlen("http://") + strlen(ipAddressStr) + strlen(sCpePort) + 20;
+        *pVal = (char*)malloc(strSize);
+        memset((void *) *pVal, 0x00, strSize);
+        strcpy(*pVal,  "http://");
+        strcat(*pVal, ipAddressStr);
+        strcat(*pVal, ":");
+        strcat(*pVal, sCpePort);
+        strcat(*pVal, "/");
+        strcat(*pVal, g_randomCpeUrl);
+        free(sCpePort);
+      }
+    }
+    DBG("ConnectionRequestURL is %s", *pVal);
 
   } else if((0    == strcmp(paramNameStr, "DeviceInfo.SoftwareVersion")) &&
             (true == _downloadCompletedSuccessfully)) {
