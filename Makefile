@@ -33,6 +33,7 @@
 #       USE_SIMU       : USE_SIMU=Y / N (Default N)
 #       DBUS_IPC_ENABLE: DBUS_IPC_ENABLE=Y / N (Default N)
 #       USE_DBUS_TEST  : USE_DBUS_TEST=Y / N (Default N)
+#       IGD_ENABLE     : IGD_ENABLE=Y / N (Default N)
 #
 #
 #   Exemple:
@@ -111,7 +112,10 @@ DEFAULT_TRACE_LEVEL     = 0
 TRACE_LEVEL             = $(DEFAULT_TRACE_LEVEL$(TRACELEVEL))$(TRACELEVEL)
 
 DEFAULT_STUN_ENABLE = N
-STUN_ENABLE         = $(DEFAULT_STUN_ENABLE$(STUNENABLE))$(STUNENABLE)
+STUN_ENABLE         = $(DEFAULT_STUN_ENABLE$(STUNENABLE))$(STUNENABLE)   #STUNENABLE??????? 
+
+DEFAULT_IGD_ENABLE = Y
+IGD_ENABLE         = $(DEFAULT_IGD_ENABLE$(IGDENABLE))$(IGDENABLE)  
 
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
@@ -142,6 +146,16 @@ ifeq ($(DBUS_IPC_ENABLE), Y)
 endif
 
 
+ifeq ($(STUN_ENABLE), Y)
+  CWMP_C_FLAGS += -DSTUN_ENABLED_ON_TR069_AGENT
+  CWMP_INC  += -I$(LOCAL_DIR)/dm_target_implementation/$(TargetName)/dm_target_nat/stun/inc
+endif
+
+ifeq ($(IGD_ENABLE), Y)
+  CWMP_C_FLAGS += -DIGD_ENABLED_ON_TR069_AGENT
+  CWMP_INC  += -I$(LOCAL_DIR)/dm_target_implementation/$(TargetName)/dm_target_nat/upnpigd/inc
+endif
+
 # INCLUDE DIR
 INCLUDE_DIR = $(CWMP_INC) $(LIB_HEADER_INC)
 
@@ -151,11 +165,6 @@ CWMP_CPP_FLAGS = -DFTX_TRACE_LEVEL=$(TRACE_LEVEL)
 
 # CWMP_C_FLAGS
 CWMP_C_FLAGS = $(CWMP_OPTIM_FLAG) $(CWMP_DEBUG_FLAG) $(CWMP_CFLAGS)
-
-ifeq ($(STUN_ENABLE), Y)
-  CWMP_C_FLAGS += -DSTUN_ENABLED_ON_TR069_AGENT
-  CWMP_INC  += -I$(LOCAL_DIR)/dm_target_implementation/$(TargetName)/dm_target_nat/stun/inc
-endif
 
 # ---------------------------------------------------------------------------
 #               PRIVATE CONFIGURATION - END (NO NEED TO CHANGE)
@@ -182,6 +191,7 @@ dm_target_dataManagement_path = dm_target_implementation/$(TargetName)/dm_target
 dm_target_main_path           = dm_target_implementation/$(TargetName)/dm_target_main/
 
 dm_target_nat_stun            = dm_target_implementation/$(TargetName)/dm_target_nat/stun/
+dm_target_nat_igd            = dm_target_implementation/$(TargetName)/dm_target_nat/igd/
 
 all:	$(CWMP_APPLICATION_NAME)
 	
@@ -198,9 +208,15 @@ endif
 	(cd $(dm_target_deviceAdapter_path) && $(MAKE))
 	(cd $(dm_target_dataManagement_path) && $(MAKE))
 	(cd dm_engine && $(MAKE))
+
 ifeq ($(STUN_ENABLE), Y)
 	($(MAKE) -C $(dm_target_nat_stun) all)
 endif
+
+ifeq ($(IGD_ENABLE), Y)
+	($(MAKE) -C $(dm_target_nat_igd) all)
+endif
+	
 	(cd $(dm_target_main_path) && $(MAKE))
 
 install:
@@ -220,7 +236,13 @@ clean :
 ifeq ($(STUN_ENABLE), Y)
 	($(MAKE) -C $(dm_target_nat_stun) $@)
 endif
+
+ifeq ($(IGD_ENABLE), Y)
+	($(MAKE) -C $(dm_target_nat_igd) $@)
+endif
+	
 	rm -rf $(REP_OBJ)
+	rm -f $(CWMP_APPLICATION_NAME)
 
 distclean :
 	@(cd dm_com && $(MAKE) $@)
@@ -232,3 +254,4 @@ distclean :
 	(cd $(dm_target_dataManagement_path) && $(MAKE) $@)
 	@(cd dm_engine && $(MAKE) $@)
 	@(cd $(dm_target_main_path) && $(MAKE) $@)
+
