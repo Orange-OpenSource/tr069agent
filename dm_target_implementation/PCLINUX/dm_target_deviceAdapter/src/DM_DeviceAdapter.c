@@ -349,11 +349,6 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
   } else if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestURL")) {
     DBG("BUILD ConnectionRequestURL");
 
-// First check if tr069agent is behind a IGD enabled gateway
-    // If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
-    // If not, get current ip address for ConnectionRequestURL
-
-    // First check Scenario Behind a gateway
     // variables for upnpDiscoverIGD
   	const char * multicastif = 0;
   	const char * minissdpdpath = 0;
@@ -364,8 +359,6 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
     struct UPNPDev * devlist = 0;
     struct UPNPDev * dev;
     // variables for UPNP_GetValidIGD()
-    struct UPNPUrls urls;
-    struct IGDdatas data;
     char lanaddr[40] = "unset";	/* ip address on the LAN */
     // variables for GetExternalIPAddress()
     char extIpAddr[40];
@@ -379,6 +372,10 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
 
     int i,ret;
 
+    // First check if tr069agent is behind a IGD enabled gateway
+        // If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
+        // If not, get current ip address for ConnectionRequestURL
+        // First check Scenario Behind a gateway
     // discover if exist WANIPConnection 1/2 or WANPPPConnection:1
     DBG("searching UPnP IGD devices, especially WANIPConnection and WANPPPConnection");
     devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
@@ -390,7 +387,9 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       // Is it possible to have both these two IPConnection on the same device?
       for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
         DBG("Found device %3d: %-48s\n", i, dev->st);
-
+        // variables for UPNP_GetValidIGD()
+        struct UPNPUrls urls;
+        struct IGDdatas data;
         // get more information from descURL using UPNP_GetValidIGD
         // return of state: -1 internal error, 0 no IGD found, 1 valid connected IGD found,
         // 2 valid IGD found but not connected, 3 UPnP device found but not recognized as IGD
@@ -462,12 +461,16 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
           else {
             DBG("GetExternalIPAddress Error %d!",ext);
           }/*if ext*/
+          FreeUPNPUrls(&urls);
         }
         else {
           DBG("Not valid and connected device found!  Error %d!",state);
         }/*if state */
       }
-      freeUPNPDevlist(devlist);
+        freeUPNPDevlist(devlist);devlist=0;
+      else{
+        DBG("No device found!!!");
+      }
     }
     else {
       // Build the Connection Request URL http://IPAddress:50805/16random
