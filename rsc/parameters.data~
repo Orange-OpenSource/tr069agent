@@ -19,8 +19,8 @@ ManagementServer.PeriodicInformEnable;3;0;1;1;2;0;0;Subscriber;1;0;0;;;
 ManagementServer.PeriodicInformInterval;1;0;1;1;2;0;0;Subscriber;3600;0;0;;;
 ManagementServer.PeriodicInformTime;4;0;1;0;0;0;0;Subscriber;;0;0;;;
 ManagementServer.ConnectionRequestURL;5;1;0;0;0;1;0;Subscriber;;0;0;;;
-ManagementServer.ConnectionRequestUsername;5;2;1;1;0;0;0;Subscriber;tinkUserCR;0;0;;;
-ManagementServer.ConnectionRequestPassword;5;2;1;1;0;0;0;Subscriber;tinkPassCR;0;0;;;
+ManagementServer.ConnectionRequestUsername;5;2;1;1;0;0;0;Subscriber;;0;0;;;
+ManagementServer.ConnectionRequestPassword;5;2;1;1;0;0;0;Subscriber;;0;0;;;
 ManagementServer.X_ORANGE-COM_MaxConnectionRequest;1;0;1;1;2;0;0;Subscriber;50;0;0;;;
 ManagementServer.X_ORANGE-COM_FreqConnectionRequest;1;0;1;1;2;0;0;Subscriber;3600;0;0;;;
 ManagementServer.X_ORANGE-COM_WIFIComm.Active;3;2;1;0;0;0;0;Subscriber;;0;0;;;
@@ -50,4 +50,4 @@ WANDevice.1.WANDSLInterfaceConfig.DownstreamCurrRate;1;0;0;0;0;0;1;Subscriber;;0
 LAN.;6;0;0;0;0;0;0;Subscriber;;0;0;;;
 LAN.IPAddress;5;1;0;0;0;0;0;Subscriber;;0;0;;;
 LAN.MACAddress;5;1;0;0;0;0;0;Subscriber;;0;0;;;
-*84FD808A
+*A0908E4C
