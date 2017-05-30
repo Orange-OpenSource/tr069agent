@@ -43,8 +43,13 @@
 #include "DM_COM_GenericHttpClientInterface.h" // Required for HTTP GET FILE Example
 #include "DM_CMN_Thread.h"
 
+#ifdef IGD_ENABLED_ON_TR069_AGENT
+#include "miniwget.h"
 #include "miniupnpc.h"
-#include "dm_igd.h"
+#include "upnpcommands.h"
+#include "upnperrors.h"
+#include "miniupnpcstrings.h"
+#endif
 
 #ifndef WIN32
 #include <linux/unistd.h> // To get the current working directory getcwd()
@@ -348,132 +353,85 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
 
       } else if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestURL")) {
         DBG("BUILD ConnectionRequestURL");
-
+        #ifdef IGD_ENABLED_ON_TR069_AGENT
+        DBG("IGD_ENABLED_ON_TR069_AGENT");
         // First check if tr069agent is behind a IGD enabled gateway
         // If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
         // If not, get current ip address for ConnectionRequestURL
 
-    // variables for upnpDiscoverIGD
-  	const char * multicastif = 0;
-  	const char * minissdpdpath = 0;
-  	int ipv6 = 0;
-  	unsigned char ttl = 2;
-  	int error = 0;
-    //struct for Discover results
-    struct UPNPDev * devlist = 0;
-    struct UPNPDev * dev;
-    // variables for UPNP_GetValidIGD()
-    char lanaddr[40] = "unset";	/* ip address on the LAN */
-    // variables for GetExternalIPAddress()
-    char extIpAddr[40];
-    // variables for AddAnyPortMapping
-    char  reservedPort [6];
-    char * remoteHost = NULL;
-    /* extPort_int is for the process of checking if port mapping already exists
-     if yes, extPort_int increments by 1 until find one external port available
-     do not forget to change this extPort_int to char extPort using DM_ENG_intToString() method */
-    int extPort_int = 7547;
-    char extPort[6] = "unset";
-    // char extPort[6] = DM_ENG_intToString(extPort_int);
-    char inPort[6] = "50805";
-    char * proto = "TCP";
-    char leaseDuration[16]= "3600";
-
-    int i,ret_getentry, ret_addmapping;
-  	// First check if tr069agent is behind a IGD enabled gateway
-  	// If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
-  	// If not, get current ip address for ConnectionRequestURL
-
-  	// First check Scenario Behind a gateway
-
-  	// discover if exist WANIPConnection 1/2 or WANPPPConnection:1
-  	DBG("searching UPnP IGD devices, especially WANIPConnection and WANPPPConnection\n");
-  	devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
-  													 0/*localport*/, ipv6, ttl, &error);
-
-  	if (devlist) {
-  		// here needs to check how many connections found. Ideally only one connection found, either IPConnection or PPPConnection.
-  		// But IPConnection could have two types: IPConnection:1 or IPConnection:2
-  		// Is it possible to have both these two IPConnection on the same device?
-  		for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
-  			DBG("Found device %3d: %-48s\n", i, dev->st);
+        // variables for upnpDiscoverIGD
+      	const char * multicastif = 0;
+      	const char * minissdpdpath = 0;
+      	int ipv6 = 0;
+      	unsigned char ttl = 2;
+      	int error = 0;
+        //struct for Discover results
+        struct UPNPDev * devlist = 0;
+        struct UPNPDev * dev;
         // variables for UPNP_GetValidIGD()
-        struct UPNPUrls urls;
-        struct IGDdatas data;
-  			// get more information from descURL using UPNP_GetValidIGD
-  			// return of state: -1 internal error, 0 no IGD found, 1 valid connected IGD found,
-  			// 2 valid IGD found but not connected, 3 UPnP device found but not recognized as IGD
-  			int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
-  			if (state == 1) {
-  				DBG("local LAN IP Address is %s\n", lanaddr);
+        char lanaddr[40] = "unset";	/* ip address on the LAN */
+        // variables for GetExternalIPAddress()
+        char extIpAddr[40];
+        // variables for AddAnyPortMapping
+        char  reservedPort [6];
+        char * remoteHost = NULL;
+        /* extPort_int is for the process of checking if port mapping already exists
+         if yes, extPort_int increments by 1 until find one external port available
+         do not forget to change this extPort_int to char extPort using DM_ENG_intToString() method */
+        int extPort_int = 7547;
+        char extPort[6] = "unset";
+        // char extPort[6] = DM_ENG_intToString(extPort_int);
+        char inPort[6] = "50805";
+        char * proto = "TCP";
+        char leaseDuration[16]= "3600";
 
-  				int ext = UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, extIpAddr);
-  				if (ext == 0){
-  					DBG("External IP Address of this network is %s\n", extIpAddr);
-            /* for WANIPConnection:2*/
-            if (0 == strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:2")){
-              //extPort = DM_ENG_intToString(extPort_int); // this not working, problem of free(extPort)
-              sprintf(extPort, "%d", extPort_int);
-              ret_addmapping = UPNP_AddAnyPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
-                                   extPort /*extPort*/,
-                                   inPort /*controlURL*/,
-                                   lanaddr /*intClient*/,
-                                   "WANIPConnection:2 addanyportmapping" /*desc*/,
-                                   proto /*proto UPPERCASE*/,
-                                   remoteHost /*remoteHost*/,
-                                   leaseDuration /*leaseDuration*/,
-                                   reservedPort /*reservedPort*/);
-              if (ret_addmapping == UPNPCOMMAND_SUCCESS){
-                DBG("AddAnyPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
-                                                                  reservedPort, inPort, leaseDuration);
-                /*build ConnnectionRequestURL here*/
-                strSize = strlen("http://") + strlen(extIpAddr) + strlen(reservedPort) + 20;
-                *pVal = (char*)malloc(strSize);
-                memset((void *) *pVal, 0x00, strSize);
-                strcpy(*pVal,  "http://");
-                strcat(*pVal, extIpAddr);
-                strcat(*pVal, ":");
-                strcat(*pVal, reservedPort);
-                strcat(*pVal, "/");
-                strcat(*pVal, g_randomCpeUrl);
-              } else {
-                DBG("AddAnyPortMapping Error!!! Error code: %d, %s\n", ret_addmapping, strupnperror(ret_addmapping));
-              }
-            } /*else: WANIPConnection:1 and WANPPPConnection:1*/
-            else {
-              do {
-                char NewintClient[40], NewintPort[6], NewLeaseDuration[16];
-                /*while port mapping exists and this port mapping entry is used by another client, increment extPort by 1 */
-                do {
-                    //extPort = DM_ENG_intToString(extPort_int);
-                    sprintf(extPort, "%d", extPort_int);
-                    extPort_int++;
-                    ret_getentry = UPNP_GetSpecificPortMappingEntry(urls.controlURL, data.first.servicetype,
-                                            extPort, proto, NULL/*remoteHost*/,
-                                            NewintClient, NewintPort, NULL/*desc*/,
-                                            NULL/*enabled*/, NewLeaseDuration);
-                    DBG("GetSpecificPortMappingEntry result %d %s\n", ret_getentry, strupnperror(ret_getentry));
-                  } while (ret_getentry == UPNPCOMMAND_SUCCESS && 0 != strcmp(NewintClient, lanaddr));
-                /*if port mapping exists, print port mapping information*/
-                if (ret_getentry == UPNPCOMMAND_SUCCESS){
-                  DBG("externalPort %s is redirected to %s:%s, leaseDuration: %s\n", extPort, NewintClient, NewintPort, NewLeaseDuration);
-                }
-                /*if port mapping exists and is used by this client or no such port mapping exists
-                  invoke a UPNP_AddPortMapping method */
-                if ((ret_getentry == UPNPCOMMAND_SUCCESS && 0 == strcmp(NewintClient, lanaddr))
-                    || (ret_getentry == 714 /*NoSuchEntryInArray*/)){
-                  ret_addmapping = UPNP_AddPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+        int i,ret_getentry, ret_addmapping;
+      	// First check if tr069agent is behind a IGD enabled gateway
+      	// If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
+      	// If not, get current ip address for ConnectionRequestURL
+
+      	// First check Scenario Behind a gateway
+
+      	// discover if exist WANIPConnection 1/2 or WANPPPConnection:1
+      	DBG("searching UPnP IGD devices, especially WANIPConnection and WANPPPConnection\n");
+      	devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
+      													 0/*localport*/, ipv6, ttl, &error);
+
+      	if (devlist) {
+      		// here needs to check how many connections found. Ideally only one connection found, either IPConnection or PPPConnection.
+      		// But IPConnection could have two types: IPConnection:1 or IPConnection:2
+      		// Is it possible to have both these two IPConnection on the same device?
+      		for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
+      			DBG("Found device %3d: %-48s\n", i, dev->st);
+            // variables for UPNP_GetValidIGD()
+            struct UPNPUrls urls;
+            struct IGDdatas data;
+      			// get more information from descURL using UPNP_GetValidIGD
+      			// return of state: -1 internal error, 0 no IGD found, 1 valid connected IGD found,
+      			// 2 valid IGD found but not connected, 3 UPnP device found but not recognized as IGD
+      			int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
+      			if (state == 1) {
+      				DBG("local LAN IP Address is %s\n", lanaddr);
+
+      				int ext = UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, extIpAddr);
+      				if (ext == 0){
+      					DBG("External IP Address of this network is %s\n", extIpAddr);
+                /* for WANIPConnection:2*/
+                if (0 == strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:2")){
+                  //extPort = DM_ENG_intToString(extPort_int); // this not working, problem of free(extPort)
+                  sprintf(extPort, "%d", extPort_int);
+                  ret_addmapping = UPNP_AddAnyPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
                                        extPort /*extPort*/,
-                                       inPort /*inPort*/,
+                                       inPort /*controlURL*/,
                                        lanaddr /*intClient*/,
-                                       "WANConnection:1 addportmapping" /*desc*/,
+                                       "WANIPConnection:2 addanyportmapping" /*desc*/,
                                        proto /*proto UPPERCASE*/,
                                        remoteHost /*remoteHost*/,
-                                       leaseDuration /*leaseDuration*/);
-                  if (ret_addmapping == UPNPCOMMAND_SUCCESS) {
-                    strcpy(reservedPort,extPort);
-                    DBG("AddPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
-                                                                     reservedPort, inPort, leaseDuration);
+                                       leaseDuration /*leaseDuration*/,
+                                       reservedPort /*reservedPort*/);
+                  if (ret_addmapping == UPNPCOMMAND_SUCCESS){
+                    DBG("AddAnyPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
+                                                                      reservedPort, inPort, leaseDuration);
                     /*build ConnnectionRequestURL here*/
                     strSize = strlen("http://") + strlen(extIpAddr) + strlen(reservedPort) + 20;
                     *pVal = (char*)malloc(strSize);
@@ -484,27 +442,75 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
                     strcat(*pVal, reservedPort);
                     strcat(*pVal, "/");
                     strcat(*pVal, g_randomCpeUrl);
+                  } else {
+                    DBG("AddAnyPortMapping Error!!! Error code: %d, %s\n", ret_addmapping, strupnperror(ret_addmapping));
                   }
-                }
-              } while (ret_addmapping == 718 /*ConflictInMappingEntry*/);
-              if (ret_addmapping != UPNPCOMMAND_SUCCESS && ret_addmapping != 718) {
-                    DBG("AddPortMapping Error!!! Error code %d, %s\n", ret_addmapping, strupnperror(ret_addmapping));
-                  }
+                } /*else: WANIPConnection:1 and WANPPPConnection:1*/
+                else {
+                  do {
+                    char NewintClient[40], NewintPort[6], NewLeaseDuration[16];
+                    /*while port mapping exists and this port mapping entry is used by another client, increment extPort by 1 */
+                    do {
+                        //extPort = DM_ENG_intToString(extPort_int);
+                        sprintf(extPort, "%d", extPort_int);
+                        extPort_int++;
+                        ret_getentry = UPNP_GetSpecificPortMappingEntry(urls.controlURL, data.first.servicetype,
+                                                extPort, proto, NULL/*remoteHost*/,
+                                                NewintClient, NewintPort, NULL/*desc*/,
+                                                NULL/*enabled*/, NewLeaseDuration);
+                        DBG("GetSpecificPortMappingEntry result %d %s\n", ret_getentry, strupnperror(ret_getentry));
+                      } while (ret_getentry == UPNPCOMMAND_SUCCESS && 0 != strcmp(NewintClient, lanaddr));
+                    /*if port mapping exists, print port mapping information*/
+                    if (ret_getentry == UPNPCOMMAND_SUCCESS){
+                      DBG("externalPort %s is redirected to %s:%s, leaseDuration: %s\n", extPort, NewintClient, NewintPort, NewLeaseDuration);
+                    }
+                    /*if port mapping exists and is used by this client or no such port mapping exists
+                      invoke a UPNP_AddPortMapping method */
+                    if ((ret_getentry == UPNPCOMMAND_SUCCESS && 0 == strcmp(NewintClient, lanaddr))
+                        || (ret_getentry == 714 /*NoSuchEntryInArray*/)){
+                      ret_addmapping = UPNP_AddPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+                                           extPort /*extPort*/,
+                                           inPort /*inPort*/,
+                                           lanaddr /*intClient*/,
+                                           "WANConnection:1 addportmapping" /*desc*/,
+                                           proto /*proto UPPERCASE*/,
+                                           remoteHost /*remoteHost*/,
+                                           leaseDuration /*leaseDuration*/);
+                      if (ret_addmapping == UPNPCOMMAND_SUCCESS) {
+                        strcpy(reservedPort,extPort);
+                        DBG("AddPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
+                                                                         reservedPort, inPort, leaseDuration);
+                        /*build ConnnectionRequestURL here*/
+                        strSize = strlen("http://") + strlen(extIpAddr) + strlen(reservedPort) + 20;
+                        *pVal = (char*)malloc(strSize);
+                        memset((void *) *pVal, 0x00, strSize);
+                        strcpy(*pVal,  "http://");
+                        strcat(*pVal, extIpAddr);
+                        strcat(*pVal, ":");
+                        strcat(*pVal, reservedPort);
+                        strcat(*pVal, "/");
+                        strcat(*pVal, g_randomCpeUrl);
+                      }
+                    }
+                  } while (ret_addmapping == 718 /*ConflictInMappingEntry*/);
+                  if (ret_addmapping != UPNPCOMMAND_SUCCESS && ret_addmapping != 718) {
+                        DBG("AddPortMapping Error!!! Error code %d, %s\n", ret_addmapping, strupnperror(ret_addmapping));
+                      }
 
-              if (ret_getentry != UPNPCOMMAND_SUCCESS && ret_getentry != 714) {
-                  DBG("GetSpecificPortMappingEntry Error!!! Error code %d, %s\n", ret_getentry, strupnperror(ret_getentry));
+                  if (ret_getentry != UPNPCOMMAND_SUCCESS && ret_getentry != 714) {
+                      DBG("GetSpecificPortMappingEntry Error!!! Error code %d, %s\n", ret_getentry, strupnperror(ret_getentry));
+                    }
                 }
+              } else {
+                DBG("Error when GetExternalIPAddress, error code %d, %s\n", ext, strupnperror(ext));
+              }
+              FreeUPNPUrls(&urls);
+            }/*if state*/else {
+                DBG("%s\n", "No valid device found by UPNP_GetValidIGD !!!");
             }
-          } else {
-            DBG("Error when GetExternalIPAddress, error code %d, %s\n", ext, strupnperror(ext));
-          }
-          FreeUPNPUrls(&urls);
-        }/*if state*/else {
-            DBG("%s\n", "No valid device found by UPNP_GetValidIGD !!!");
-        }
-      } /*for(dev)*/
-      freeUPNPDevlist(devlist); devlist=0;
-    }/*if devlist*/
+          } /*for(dev)*/
+          freeUPNPDevlist(devlist); devlist=0;
+        }/*if devlist*/
     else {
       DBG("No UPnP device found!");
       // Build the Connection Request URL http://IPAddress:50805/16random
@@ -530,8 +536,31 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
         free(sCpePort);
       }
     }
-    DBG("ConnectionRequestURL is %s", *pVal);
+    #else
+    DBG("IGD NOT ENABLED ON TR069 AGENT");
+    // Build the Connection Request URL http://IPAddress:50805/16random
+    char* ipAddressStr = DM_SystemCalls_getIPAddress();
+    if (NULL == ipAddressStr)
+    {
+       ipAddressStr = _retrieveValueFromInfoList(WAN_IP_ADDRESS_KEY);
+    }
+    if(NULL == ipAddressStr) {
 
+    } else {
+      char* sCpePort = DM_ENG_intToString(CPE_PORT);
+      strSize = strlen("http://") + strlen(ipAddressStr) + strlen(sCpePort) + 20;
+      *pVal = (char*)malloc(strSize);
+      memset((void *) *pVal, 0x00, strSize);
+      strcpy(*pVal,  "http://");
+      strcat(*pVal, ipAddressStr);
+      strcat(*pVal, ":");
+      strcat(*pVal, sCpePort);
+      strcat(*pVal, "/");
+      strcat(*pVal, g_randomCpeUrl);
+      free(sCpePort);
+    }
+    #endif
+    DBG("ConnectionRequestURL is %s", *pVal);
   } else if((0    == strcmp(paramNameStr, "DeviceInfo.SoftwareVersion")) &&
             (true == _downloadCompletedSuccessfully)) {
       // The FW File is downloaded. Send the next software version for TEST purpose.
