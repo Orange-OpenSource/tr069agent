@@ -85,5 +85,9 @@
 void*
 DM_IGD_upnpigdThread()
 {
-
+  do{
+    DBG("Threadupnpigd Test!");
+    sleep(60); //milliseconds 
+  }
+  while (true);
 }

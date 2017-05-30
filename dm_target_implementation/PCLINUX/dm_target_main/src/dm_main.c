@@ -97,6 +97,10 @@ const char* _VERSION = "3.1";
 #include "dm_stun.h"
 #endif
 
+#ifdef IGD_ENABLED_ON_TR069_AGENT
+#include "dm_upnpigd.h"
+#endif
+
 #ifndef DATABASENAME
 #define DATABASENAME "parameter.csv"
 #endif
@@ -125,6 +129,10 @@ char * g_randomCpeUrl = NULL;
 
 #ifdef STUN_ENABLED_ON_TR069_AGENT
 static DM_CMN_ThreadId_t _stunThreadId = 0;
+#endif
+
+#ifdef IGD_ENABLED_ON_TR069_AGENT
+static DM_CMN_ThreadId_t _upnpigdThreadId = 0;
 #endif
 
 /* Private routine declaration */
@@ -413,6 +421,17 @@ main(int  argc,
    }
 #endif
 
+#ifdef IGD_ENABLED_ON_TR069_AGENT
+    //----------------------------------------------------------------------------------
+    // Start the UPnP IGD Client Thread
+    //----------------------------------------------------------------------------------
+   if (DM_CMN_Thread_create(DM_IGD_upnpigdThread, NULL, false, &_upnpigdThreadId) != 0)
+   {
+     EXEC_ERROR("Starting UPnP IGD thread failed!!");
+     ASSERT(FALSE);
+   }
+#endif
+
    // Wait Parameter Manager thread complete (should never occurs --> Infinite loop)
 	 DM_ENG_ParameterManager_join();
 
@@ -422,6 +441,15 @@ main(int  argc,
       DBG("Ask to close the stun client thread");
       DM_CMN_Thread_cancel( _stunThreadId );
       _stunThreadId=0;
+    }
+#endif
+
+#ifdef IGD_ENABLED_ON_TR069_AGENT
+    if (_upnpigdThreadId != 0)
+    {
+      DBG("Ask to close the UPnP IGD client thread");
+      DM_CMN_Thread_cancel( _upnpigdThreadId );
+      _upnpigdThreadId=0;
     }
 #endif
 
