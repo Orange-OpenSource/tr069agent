@@ -5,7 +5,7 @@
  *
  * This software is distributed under the terms and conditions of the 'Apache-2.0'
  * license which can be found in the file 'LICENSE.txt' in this package distribution
- * or at 'http://www.apache.org/licenses/LICENSE-2.0'. 
+ * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
  * File        : DM_stun.h
@@ -20,7 +20,7 @@
  * $Log$
  *
  */
-
+#if 0
 // --------------------------------------------------------------------
 // System headers
 // --------------------------------------------------------------------
@@ -46,6 +46,7 @@
 #include "upnperrors.h"
 #include "miniupnpcstrings.h"
 
+#endif
 #ifndef DM_IGD_H
 
 #define DM_IGD_H
@@ -59,6 +60,6 @@
  * @return return DM_OK is okay else DM_ERR
  *
  */
-void* DM_IGD_stunThread();
+void* DM_IGD_upnpigdThread();
 
 #endif
