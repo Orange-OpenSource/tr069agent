@@ -320,6 +320,31 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
   int    strSize = 0;
   char * nextSoftwareVersionStr = NULL;
 
+  // variables for upnpDiscoverIGD
+  const char * multicastif = 0;
+  const char * minissdpdpath = 0;
+  int ipv6 = 0;
+  unsigned char ttl = 2;
+  int error = 0;
+  //struct for Discover results
+  struct UPNPDev * devlist = 0;
+  struct UPNPDev * dev;
+  // variables for UPNP_GetValidIGD()
+  char lanaddr[40] = "unset";	/* ip address on the LAN */
+  // variables for GetExternalIPAddress()
+  char extIpAddr[40];
+  // variables for AddAnyPortMapping
+  char  reservedPort [6];
+  char * remoteHost = NULL;
+  int extPort_int = 7547;
+  char extPort[6] = "unset";
+  // char extPort[6] = DM_ENG_intToString(extPort_int);
+  char inPort[6] = "50805";
+  char * proto = "TCP";
+  char leaseDuration[16]= "3600";
+
+  int i,ret_getentry, ret_addmapping;
+
   // Set default *pVal
   *pVal = NULL;
   if(NULL == paramNameStr) {
@@ -358,41 +383,10 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
         // First check if tr069agent is behind a IGD enabled gateway
         // If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
         // If not, get current ip address for ConnectionRequestURL
-
-        // variables for upnpDiscoverIGD
-      	const char * multicastif = 0;
-      	const char * minissdpdpath = 0;
-      	int ipv6 = 0;
-      	unsigned char ttl = 2;
-      	int error = 0;
-        //struct for Discover results
-        struct UPNPDev * devlist = 0;
-        struct UPNPDev * dev;
-        // variables for UPNP_GetValidIGD()
-        char lanaddr[40] = "unset";	/* ip address on the LAN */
-        // variables for GetExternalIPAddress()
-        char extIpAddr[40];
-        // variables for AddAnyPortMapping
-        char  reservedPort [6];
-        char * remoteHost = NULL;
         /* extPort_int is for the process of checking if port mapping already exists
          if yes, extPort_int increments by 1 until find one external port available
          do not forget to change this extPort_int to char extPort using DM_ENG_intToString() method */
-        int extPort_int = 7547;
-        char extPort[6] = "unset";
-        // char extPort[6] = DM_ENG_intToString(extPort_int);
-        char inPort[6] = "50805";
-        char * proto = "TCP";
-        char leaseDuration[16]= "3600";
 
-        int i,ret_getentry, ret_addmapping;
-      	// First check if tr069agent is behind a IGD enabled gateway
-      	// If yes, do a port mapping, get gateway's external ip address for ConnectionRequestURL.
-      	// If not, get current ip address for ConnectionRequestURL
-
-      	// First check Scenario Behind a gateway
-
-      	// discover if exist WANIPConnection 1/2 or WANPPPConnection:1
       	DBG("searching UPnP IGD devices, especially WANIPConnection and WANPPPConnection\n");
       	devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
       													 0/*localport*/, ipv6, ttl, &error);

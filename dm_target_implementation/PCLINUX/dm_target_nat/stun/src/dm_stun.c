@@ -1494,8 +1494,8 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 				// --------------------------------------------------------------
 
 				// A least one message received - Set TimeoutState to TIMEOUT_RECEIVED
-                                pthread_mutex_lock( &(stunThreadData->timeoutThreadData.mutex_lock) );
-                                DBG( "Set the TimeoutState to TIMEOUT_RECEIVED (Current Timeout = %d)", timeout );
+        pthread_mutex_lock( &(stunThreadData->timeoutThreadData.mutex_lock) );
+        DBG( "Set the TimeoutState to TIMEOUT_RECEIVED (Current Timeout = %d)", timeout );
 				stunThreadData->TimeoutState = TIMEOUT_RECEIVED;
 				timeoutDiscoveryMessageReceive = true;
 				pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
@@ -2489,7 +2489,7 @@ DM_STUN_getParameterValue(char* parameterName, char** value)
 {
 	DM_ENG_ParameterValueStruct**	pResult = NULL;
 	char*				pParameterName[2];
-	int				err;
+	int				  err;
 	bool				bRet    = true;
 
 	DBG("STUN - DM_STUN_getParameterValue - parameterName = %s", parameterName);
@@ -2502,7 +2502,7 @@ DM_STUN_getParameterValue(char* parameterName, char** value)
 	pParameterName[1]=NULL;
 
 	// -------------------------------------------------------------------------------
-	// Request the value of the parameter name given fro mthe DM_Engine
+	// Request the value of the parameter name given from the DM_Engine
 	// -------------------------------------------------------------------------------
 	err = DM_ENG_GetParameterValues( DM_ENG_EntityType_ANY, (char**)pParameterName, &pResult );
 

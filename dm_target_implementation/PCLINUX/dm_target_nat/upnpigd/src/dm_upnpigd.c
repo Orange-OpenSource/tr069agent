@@ -39,6 +39,11 @@
 /* for IPPROTO_TCP / IPPROTO_UDP */
 #include <netinet/in.h>
 #include <ctype.h>
+#include <sys/time.h>				/* */
+#include <arpa/inet.h>				/* For inet_aton            */
+#include <assert.h>				/* */
+#include <stdbool.h>				/* Need for the bool type   */
+#include <unistd.h>       /*for sleep function*/
 // --------------------------------------------------------------------
 // lib UPnP IGD's headers
 // --------------------------------------------------------------------
@@ -63,10 +68,29 @@
 // --------------------------------------------------------------------
 // GLOBAL VALUES
 // --------------------------------------------------------------------
+// variables for upnpDiscoverIGD
+const char * multicastif = 0;
+const char * minissdpdpath = 0;
+int ipv6 = 0;
+unsigned char ttl = 2;
+int error = 0;
+//struct for Discover results
+struct UPNPDev * devlist = 0;
+struct UPNPDev * dev;
+// variables for UPNP_GetValidIGD()
+char lanaddr[40] = "unset";	/* ip address on the LAN */
+char * remoteHost = NULL;
+char extPort[6] = "7547";
+// char extPort[6] = DM_ENG_intToString(extPort_int);
+char inPort[6] = "50805";
+char * proto = "TCP";
+char leaseDuration[16]= "3600";
 
+int i,ret;
 // --------------------------------------------------------------------
 // New definitions
 // --------------------------------------------------------------------
+#define IGD_SLEEP_TIME_ON_LeaseDuration (60) /*Default value 3600*/
 
 // --------------------------------------------------------------------
 // FUNCTIONS defined in the file
@@ -87,7 +111,30 @@ DM_IGD_upnpigdThread()
 {
   do{
     DBG("Threadupnpigd Test!");
-    sleep(60); //milliseconds 
+
+    devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
+                             0/*localport*/, ipv6, ttl, &error);
+    if (devlist){
+      for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
+        struct UPNPUrls urls;
+        struct IGDdatas data;
+      	int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
+        ret = UPNP_AddPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+                             extPort /*extPort*/,
+                             inPort /*inPort*/,
+                             lanaddr /*intClient*/,
+                             "WANConnection:1 addportmapping" /*desc*/,
+                             proto /*proto UPPERCASE*/,
+                             remoteHost /*remoteHost*/,
+                             leaseDuration /*leaseDuration*/);
+       if (ret == UPNPCOMMAND_SUCCESS){
+         DBG("Re-active port mapping success!!! external port actived is %s", extPort);
+       } else{
+         DBG("Re-active port mapping not success!!! Error code %d, %s", ret, strupnperror(ret));
+       }
+       sleep(IGD_SLEEP_TIME_ON_LeaseDuration); //seconds
+      }
+    }
   }
   while (true);
 }
