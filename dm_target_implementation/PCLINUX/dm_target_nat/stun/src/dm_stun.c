@@ -5,7 +5,7 @@
  *
  * This software is distributed under the terms and conditions of the 'Apache-2.0'
  * license which can be found in the file 'LICENSE.txt' in this package distribution
- * or at 'http://www.apache.org/licenses/LICENSE-2.0'. 
+ * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
  * File        : DM_stun.c
@@ -67,7 +67,7 @@ typedef struct
 {
 	UInt16			binding;
 	UInt16			timeout;
-} 
+}
 #ifndef mips
 __attribute((packed))
 #endif
@@ -82,7 +82,7 @@ typedef struct
 	StunAddress4      stunServer;
 	pthread_t         threadId;
 	pthread_mutex_t   mutex_lock;
-} 
+}
 #ifndef mips
 __attribute((packed))
 #endif
@@ -114,7 +114,7 @@ typedef struct
 	bool           bExitWindow;
 	bool           bCanNotificateWanIP;
 	bool           bThrirdThreadLaunched;
-} 
+}
 #ifndef mips
 __attribute((packed))
 #endif
@@ -246,7 +246,7 @@ static int   DM_STUN_ComputeGlobalTimeout(int step, int min, int max, int limit)
 /**
  * @brief the DM_STUN thread
  *        launch the two threads to manage the STUN protocol and the timeout NAT session
- * 
+ *
  * @param none
  *
  * @return pthread_exit
@@ -272,9 +272,9 @@ DM_STUN_stunThread()
 
 	// Memset to 0 tmp
 	memset((void *) &tmp, 0x00, sizeof(tmp));
-	
+
 	INFO( "The STUN Client is starting " );
-	
+
 	// --------------------------------------------------------------------
 	// Initialization
 	// --------------------------------------------------------------------
@@ -289,14 +289,14 @@ DM_STUN_stunThread()
 	stunEnable                                      = UNKNOWN_STATE;
 	previousStunEnable                              = UNKNOWN_STATE;
 	natDetected                                     = false;
-	
+
 	memset( &udpConnectionRequestAddress, 0x00, UDP_CONNECTION_REQUEST_ADDRESS_SIZE );
 	memset( &(mainStunThreadData.timeoutThreadData), 0x00, sizeof(timeoutThreadStruct) );
-	
+
 	initConnectionFreqArray( mainStunThreadData.connectionFreqArray );
 	pthread_mutex_init( &(mainStunThreadData.timeoutThreadData.mutex_lock), NULL );
 
-	
+
 	// --------------------------------------------------------------------
 	// Check that all the parameters are well provided in the dataModel database
 	// -------------------------------------------------------------------
@@ -306,10 +306,10 @@ DM_STUN_stunThread()
 		WARN( "STUN - Thread Client - Wait a while (some parameters could be set later)" );
 		sleep(STUN_SLEEP_TIME_ON_PARAM_VALUE_WAIT);
 	} // IF
-	
+
 	// Init values
 	DM_STUN_initValues( &mainStunThreadData );
-	
+
 	// --------------------------------------------------------------------
 	// 	USERNAME AND PASSWORD FOR THE CONNECTION REQUEST (UDP/TCP)
 	// --------------------------------------------------------------------
@@ -321,30 +321,30 @@ DM_STUN_stunThread()
 	memset( szConnectionRequestUsername.value, 0x00, STUN_MAX_STRING );
 	DM_STUN_getParameterValue( CONNECTION_REQUEST_USERNAME, &getParameterResult );
 	DBG( "STUN - Result_USR: '%s' ", getParameterResult );
-	
+
 	strcpy( szConnectionRequestUsername.value, getParameterResult );
 	szConnectionRequestUsername.sizeValue = strlen( szConnectionRequestUsername.value );
 	free( getParameterResult );
-	
+
 	// --------------------------------------------------------------------
 	// Password :
 	// --------------------------------------------------------------------
 	memset( szConnectionRequestPassword.value, 0x00, STUN_MAX_STRING );
 	DM_STUN_getParameterValue( CONNECTION_REQUEST_PASSWORD, &getParameterResult );
 	DBG( "STUN - Result_PWD: '%s' ", getParameterResult );
-	
+
 	strcpy( szConnectionRequestPassword.value, getParameterResult );
 	szConnectionRequestPassword.sizeValue = strlen( szConnectionRequestPassword.value );
 	free(getParameterResult);
-	
+
 	DBG( "STUN - ConnectionRequestUsername = '%s' ", szConnectionRequestUsername.value );
 	DBG( "STUN - ConnectionRequestPassword = '%s' ", szConnectionRequestPassword.value );
-	
+
 	// --------------------------------------------------------------------
 	// 			INITIAL TIMEOUT VALUE
 	// --------------------------------------------------------------------
 	// The timeout is equal to the time determined by the timeoutDiscoveryThread to maintain the binding.
-	// If the thread is not launched, this is equal to STUNMininmumKeepAlivePeriod This allow to use 
+	// If the thread is not launched, this is equal to STUNMininmumKeepAlivePeriod This allow to use
 	// only one thread to manage the R/W
 	// --------------------------------------------------------------------
 	DM_STUN_getParameterValue( STUN_MIN_KEEP_ALIVE_PERIOD, &getParameterResult );
@@ -354,7 +354,7 @@ DM_STUN_stunThread()
 	nMaxValTimeout = atol( getParameterResult ); //time in seconds
 	free( getParameterResult );
 	// --------------------------------------------------------------------
-	// If STUN_MIN_KEEP_ALIVE_PERIOD is equal to STUN_MAX_KEEP_ALIVE_PERIOD, so 
+	// If STUN_MIN_KEEP_ALIVE_PERIOD is equal to STUN_MAX_KEEP_ALIVE_PERIOD, so
 	// the timeout should be STUN_MIN_KEEP_ALIVE_PERIOD
 	// --------------------------------------------------------------------
 	if ( nMinValTimeout == nMaxValTimeout )
@@ -365,13 +365,13 @@ DM_STUN_stunThread()
 	mainStunThreadData.nTimeout = nMinValTimeout;
 	g_timeout		= mainStunThreadData.nTimeout;
 	DBG( "STUN Initial Timeout value = %d seconds ", mainStunThreadData.nTimeout );
-	
+
 	// --------------------------------------------------------------------
 	// Find a free port number for the main stun client
 	// --------------------------------------------------------------------
 	mainStunThreadData.stunClientPort.binding = stunRandomPort();
 	DBG( "STUN Client UDP Port = %d ", mainStunThreadData.stunClientPort.binding );
-	
+
 	// --------------------------------------------------------------------
 	// Read the currect IP address in the dataModel
 	// --------------------------------------------------------------------
@@ -380,23 +380,23 @@ DM_STUN_stunThread()
 	mainStunThreadData.lanIp = tmp.s_addr;
 	free( getParameterResult );
 	previousLanIp        = mainStunThreadData.lanIp;
-	
+
 	// --------------------------------------------------------------------------------------
 	// Open the port found before
 	// --------------------------------------------------------------------------------------
 	DM_STUN_openSocket( &(mainStunThreadData.fdClient), mainStunThreadData.lanIp, mainStunThreadData.stunClientPort.binding );
-	
+
 	// --------------------------------------------------------------------------------------
 	// Define an handle to the DM_STUN_stopThread function in case if the thread received a signal
 	// --------------------------------------------------------------------------------------
 	pthread_cleanup_push( (void(*)(void*))DM_STUN_stopThread, (void*)&mainStunThreadData );
-	
+
 	// --------------------------------------------------------------------------------------
 	// Update the datamodel with the init values
 	// --------------------------------------------------------------------------------------
 	DM_STUN_updateValuesDatamodel( mainStunThreadData.wanIp, mainStunThreadData.stunClientPort.binding, mainStunThreadData.natDetected );
 	INFO( "STUN Initialization completed successfully" );
-	
+
 	// --------------------------------------------------------------------------------------
 	// Main loop of the stun client
 	// --------------------------------------------------------------------------------------
@@ -404,7 +404,7 @@ DM_STUN_stunThread()
 	{
 		DBG( "Binding Thread -  - Begin Main Loop" );
 		mainStunThreadData.bThrirdThreadLaunched = false;
-		
+
 		// --------------------------------------------------------------------------------------
 		// Check if STUN is enabled in the dataModel
 		// --------------------------------------------------------------------------------------
@@ -413,7 +413,7 @@ DM_STUN_stunThread()
 		stunEnable = atol( getParameterResult );
 		DBG( "--> STUN is [%s] ", stunEnable==ENABLE?"ENABLED":"DISABLED" );
 		free( getParameterResult );
-		
+
 		// --------------------------------------------------------------------------------------
 		// Check the latest IP address (can changed in DHCP mode) and update it according to the STUN context
 		// If the LAN_IP_ADDRESS have an active notification, the information will arrived until the ACS server
@@ -436,7 +436,7 @@ DM_STUN_stunThread()
 		} else {
 			DBG( "The LAN IP address have not changed ; nothing to do. " );
 		} // IF
-		
+
 		// --------------------------------------------------------------------------------------
 		// --> STUN was working and will end
 		// --------------------------------------------------------------------------------------
@@ -462,7 +462,7 @@ DM_STUN_stunThread()
 			natDetected        = false;	// Update the NAT DETECTED value
 			bStartDiscovery    = false;	// Disabled to start a new pthread discovery
 		} // IF
-		
+
 		// --------------------------------------------------------------------------------------
 		// --> STUN was not working and will start
 		// --------------------------------------------------------------------------------------
@@ -486,36 +486,36 @@ DM_STUN_stunThread()
 			} // IF
 			previousStunEnable = ENABLE;	// Update the STUN state
 			bStartDiscovery    = true;	// Start the Discovery thread
-			
+
 			// --------------------------------------------------------------------------------------
 			// Initialize the STUN context
 			// --------------------------------------------------------------------------------------
 			DM_STUN_initValues( &mainStunThreadData );
 		} // IF
-		
+
 		// --------------------------------------------------------------------------------------
 		// SEND message management
 		// --------------------------------------------------------------------------------------
 		if ( ENABLE == stunEnable )
 		{
 			DBG( "Binding Thread - STUN Client is ENABLED " );
-			
+
 			DBG( "Binding Thread - Send a binding request Message ");
 			DM_STUN_sendManagement( &mainStunThreadData );
-			
+
 			// --------------------------------------------------------------------------------------
 			// Set the current NAT timeout
 			// --------------------------------------------------------------------------------------
 			mainStunThreadData.nTimeout = g_timeout;
 			DBG( "Binding Thread - Current Timeout %d sec ", g_timeout );
-			
+
 			// --------------------------------------------------------------------------------------
 			// READ message management
 			// --------------------------------------------------------------------------------------
 			DBG( "Binding Thread - Read the Message - Begin");
 			DM_STUN_readManagement( &mainStunThreadData );
 			DBG( "Binding Thread - Read the Message - End");
-			
+
 			// --------------------------------------------------------------------------------------
 			// Start the discoveru thread
 			// --------------------------------------------------------------------------------------
@@ -534,7 +534,7 @@ DM_STUN_stunThread()
 		} // IF
 		DBG( "Binding Thread - End Main Loop" );
 	} while( true ); // --> what's about if we wanna stop the process ?
-	
+
 	// --------------------------------------------------------------------------------------
 	// Dead code...
 	// --------------------------------------------------------------------------------------
@@ -545,7 +545,7 @@ void
 DM_STUN_startTimeoutDiscoveryThread(stunThreadStruct *stunThreadData)
 {
 	pthread_attr_t	timeoutThreadAttribute_ManagementThread;
-	
+
 	// -------------------------------------------
 	// DM_STUN_timeoutDiscoveryManagement pthread
 	// -------------------------------------------
@@ -599,11 +599,11 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 	// discoveryTimeoutStunThreadData
 	// Memset to 0 tmp
 	memset((void *) &tmp, 0x00, sizeof(tmp));
-	
+
 	pthread_mutex_init( &(discoveryTimeoutStunThreadData.timeoutThreadData.mutex_lock), NULL );
-	
+
 	DBG( "TimeoutDiscovery Thread - --> DM_STUN_timeoutDiscoveryManagementThread() " );
-	
+
 	// --------------------------------------------------------------------
 	// 				Initialisation
 	// --------------------------------------------------------------------
@@ -623,9 +623,9 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 	discoveryTimeoutStunThreadData.lastStunMessageReceivedType     = MESSAGE_UNKNOWN;
 	memset( &(discoveryTimeoutStunThreadData.timeoutThreadData), 0x00, sizeof(timeoutThreadStruct) );
 	discoveryTimeoutStunThreadData.timeoutThreadData.threadId      = 0;
-	
+
 	// --------------------------------------------------------------------
-	// the timeout is equal to the time determined by the timeoutDiscoveryThread to maintain 
+	// the timeout is equal to the time determined by the timeoutDiscoveryThread to maintain
 	// the binding. if the thread is not launched, this is equal to
 	// STUNMininmumKeepAlivePeriod This allow to use only one thread to manage the R/W
 	// --------------------------------------------------------------------
@@ -633,24 +633,24 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 	discoveryTimeoutStunThreadData.nTimeout = atol( getParameterResult );	// Time in seconds
 	free( getParameterResult );
 	DBG( "TimeoutDiscovery Thread - STUN Initial Timeout value = %d seconds.", discoveryTimeoutStunThreadData.nTimeout );
-	
+
 	// --------------------------------------------------------------------
 	// Find a free port
 	// --------------------------------------------------------------------
 	do{
 	  discoveryTimeoutStunThreadData.stunClientPort.binding = stunRandomPort();
-	} 
+	}
 	while( discoveryTimeoutStunThreadData.stunClientPort.binding == initial_stunThreadData->stunClientPort.binding );
-	
-	{ 
+
+	{
 	  discoveryTimeoutStunThreadData.stunClientPort.timeout = stunRandomPort();
 	}
 	while( (discoveryTimeoutStunThreadData.stunClientPort.binding == discoveryTimeoutStunThreadData.stunClientPort.timeout) ||
 	       (initial_stunThreadData->stunClientPort.binding        == discoveryTimeoutStunThreadData.stunClientPort.timeout) );
-	       
+
 	DBG( "TimeoutDiscovery Thread - STUN Client UDP Port        = %d ", discoveryTimeoutStunThreadData.stunClientPort.binding );
 	DBG( "TimeoutDiscovery Thread - STUN Timeout Discovery Port = %d ", discoveryTimeoutStunThreadData.stunClientPort.timeout );
-	
+
 	// --------------------------------------------------------------------
 	// Read the currect IP address
 	// --------------------------------------------------------------------
@@ -659,7 +659,7 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 	discoveryTimeoutStunThreadData.lanIp = tmp.s_addr;
 	free( getParameterResult );
 	previousLanIp        = discoveryTimeoutStunThreadData.lanIp;
-	
+
 	// --------------------------------------------------------------------
 	// Make some other settings
 	// --------------------------------------------------------------------
@@ -667,7 +667,7 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 	DM_STUN_initValues( &discoveryTimeoutStunThreadData );
 	DM_STUN_openSocket( &(discoveryTimeoutStunThreadData.fdClient), discoveryTimeoutStunThreadData.lanIp, discoveryTimeoutStunThreadData.stunClientPort.binding );
 	INFO( "TimeoutDiscovery Thread - STUN Initialization completed successfully." );
-	
+
 	// -------------------------------------------
 	// Main loop of the Discovery pthread
 	// -------------------------------------------
@@ -676,7 +676,7 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 	{
 		DBG( "TimeoutDiscovery Thread - Main Loop Start" );
 		DBG( "TimeoutDiscovery Thread - Current timeout duration = %d ", discoveryTimeoutStunThreadData.nTimeout );
-		
+
 		// --------------------------------------------------------------------
 		// Test if STUN is enabled in the dataModel
 		// --------------------------------------------------------------------
@@ -685,7 +685,7 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 		stunEnable = atol( getParameterResult );
 		DBG( "TimeoutDiscovery Thread - STUN is %s", stunEnable==ENABLE?"ENABLED":"DISABLED" );
 		free( getParameterResult );
-		
+
 		// --------------------------------------------------------------------
 		// Test if the LAN IP address have changed because of a DHCP new context
 		// --------------------------------------------------------------------
@@ -704,7 +704,7 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 		} else {
 			DBG( "TimeoutDiscovery Thread - The LAN IP address have not changed ; nothing to do." );
 		} // IF
-		
+
 		// --------------------------------------------------------------------
 		// Check of the previous state and if stun is enabled
 		// --------------------------------------------------------------------
@@ -724,7 +724,7 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 			previousStunEnable = ENABLE;
 			DM_STUN_initValues( &discoveryTimeoutStunThreadData );
 		} // IF
-		
+
 		// --------------------------------------------------------------------------------------
 		// SEND message management
 		// --------------------------------------------------------------------------------------
@@ -739,14 +739,14 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 		} else {
 			DBG( "TimeoutDiscovery Thread - STUN Client is DISABLED (or Timeout discovery in progress). No message will be sent " );
 		} // IF
-		
+
 		// --------------------------------------------------------------------------------------
 		// READ a message
 		// --------------------------------------------------------------------------------------
 		DBG( "TimeoutDiscovery Thread - Before the DM_STUN_readManagement() function " );
 		DM_STUN_readManagementTimeout( &discoveryTimeoutStunThreadData );
 		DBG( "TimeoutDiscovery Thread - After the DM_STUN_readManagement() function  " );
-		
+
 		// --------------------------------------------------------------------------------------
 		// Test if we already have the WanIP address
 		// --------------------------------------------------------------------------------------
@@ -754,13 +754,13 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 		if ( VALIDATED == discoveryTimeoutStunThreadData.stunWanIpNotification )
 		{
 			DBG( "TimeoutDiscovery Thread - WAN IP address received so we can start the DM_STUN_timeoutDiscoveryThread() pthread..." );
-			
+
 			// --------------------------------------------------------------------------------------
 			// ReInit the stunWanIpNotification flag with NOT_NOTIFIED
 			// --------------------------------------------------------------------------------------
 			DBG( "TimeoutDiscovery Thread - Set the stunWanIpNotification flag to NOT_NOTIFIED " );
 			discoveryTimeoutStunThreadData.stunWanIpNotification = NOT_NOTIFIED;
-			
+
 			// -------------------------------------------
 			// Start the DM_STUN_timeoutDiscoveryThread pthread (2)
 			// -------------------------------------------
@@ -800,15 +800,15 @@ DM_STUN_timeoutDiscoveryManagementThread(stunThreadStruct* initial_stunThreadDat
 		} // IF
 		DBG( "TimeoutDiscovery Thread - ----- END OF THE MAIN LOOP of the DM_STUN_timeoutDiscoveryManagementThread -----" );
 	} while( discoveryTimeoutStunThreadData.bExitWindow );
-	
+
 	// -------------------------------------------
 	// Close the temporaly FD used for the socket
 	// -------------------------------------------
 	DBG( "TimeoutDiscovery Thread - Closing the FD (%d) used for the socket ", discoveryTimeoutStunThreadData.fdClient );
 	close( discoveryTimeoutStunThreadData.fdClient );
-	
+
 	DBG( "TimeoutDiscovery Thread - <-- DM_STUN_timeoutDiscoveryManagementThread() " );
-	
+
 	// -------------------------------------------
 	// Exit the pthread (2)
 	// -------------------------------------------
@@ -835,12 +835,12 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 	UInt8		timeoutReceptionState	= NONE;
 	char*		getParameterResult    = NULL;
 	struct in_addr	tmp;
-	
+
 	// Memset to 0 tmp
 	memset((void *) &tmp, 0x00, sizeof(tmp));
-	
+
 	DBG( "--> DM_STUN_timeoutDiscoveryThread (Start Timeout Discovery Thread) " );
-	
+
 	DBG( "Timeout port     = %u ", stunThreadData->timeoutThreadData.timeoutPort    );
 	DBG( "Nat binding port = %u ", stunThreadData->timeoutThreadData.wanBindingPort );
 	DM_STUN_getParameterValue( STUN_MAX_KEEP_ALIVE_PERIOD, &getParameterResult );
@@ -863,7 +863,7 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 		step    = (maxTimeout-minTimeout)/DM_STUN_NB_MAX_STEP;
 		if(0 == step) step=1;  // At least set step to 1 sec.
 		DBG ( "Step = %d ", step );
-		
+
 		// ------------------------------------------------------------------------------------------
 		// A message is send then the thread is asleep.
 		// When the thread is wake up if the TIMEOUT is received, that means that the previous
@@ -882,7 +882,7 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 			DBG( "TimeoutDiscovery Thread - TimeoutReceptionState (after) = %d  ", stunThreadData->TimeoutState );
 
 			pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
-			
+
 			// ------------------------------------------------------------------------------------------
 			// Get the latest IP address and see if we need to reopen it
 			// ------------------------------------------------------------------------------------------
@@ -899,7 +899,7 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
       			} else {
 				DBG( "TimeoutDiscovery Thread -The LAN Ip address have not changed : Nothing to do." );
 			} // IF
-			
+
 			// ------------------------------------------------------------------------------------------
 			// Send a discovery message (Bind_Request with a RESPONSE_ADDRESS to the WANIP)
 			// ------------------------------------------------------------------------------------------
@@ -914,14 +914,14 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 					     stunThreadData->timeoutThreadData.wanIp,
 					     stunThreadData->timeoutThreadData.wanBindingPort );
 			DBG( "TimeoutDiscovery Thread - <-After the DM_STUN_sendMessage() " );
-			
+
 			// ------------------------------------------------------------------------------------------
 			// Wait for a while
 			// ------------------------------------------------------------------------------------------
 			DBG( "TimeoutDiscovery Thread - Sleep %d seconds", timeout );
 			sleep( timeout );
 			DBG( "TimeoutDiscovery Thread - Wake up" );
-			
+
 			// ------------------------------------------------------------------------------------------
 			// Save the global TimeoutState flag
 			// ------------------------------------------------------------------------------------------
@@ -931,10 +931,10 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 			DBG( "TimeoutDiscovery Thread - TimeoutReceptionState (before) = %d ", stunThreadData->TimeoutState );
 			timeoutReceptionState = stunThreadData->TimeoutState;
 			DBG( "TimeoutDiscovery Thread - TimeoutReceptionState (after)  = %d ", stunThreadData->TimeoutState );
-			
+
 			pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 
-			
+
 			// ------------------------------------------------------------------------------------------
 			// Test if the latest global TimeoutState flag is a TIMEOUT_RECEIVED, update in the ReadManagement()
 			// function ; if so, that's means that a BindingResponse have been received so we should continue
@@ -948,9 +948,9 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 				pthread_mutex_lock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 
 				timeout += step;
-				
+
 				DBG( "TimeoutDiscovery Thread - New timeout value = %d (step = %d)", timeout, step );
-				
+
 				//g_timeout = timeout;
 				DBG( "TimeoutDiscovery Thread - Global timeout (before) = %d ", stunThreadData->nTimeout );
 				stunThreadData->nTimeout = timeout;
@@ -958,7 +958,7 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 				pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 
 			} // IF
-			
+
 			// ------------------------------------------------------------------------------------------
 			// If the latest global TimeoutState flag is NOT a TIMEOUT_RECEIVED, any message have been
 			// received so the current timeout is the timeout value expected.
@@ -968,23 +968,23 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 				DBG( "TimeoutDiscovery Thread - ---- TIMEOUT_RECEIVED : --- NOT --- SUCCEED with %d seconds ---- ", timeout );
 			} // IF
 		} while ( (timeout<=maxTimeout) && (timeoutReceptionState == TIMEOUT_RECEIVED) );
-		
+
                 // Compute the timeout value
-		
+
                 // --------------------------------------------------------------------------------------
                 // Feed back the timeout found to the main stun client pthread (1)
                 // --------------------------------------------------------------------------------------
                 DBG("TIMEOUT DISCOVERED - Exact Value = %d seconds", timeout);
 		g_timeout = DM_STUN_ComputeGlobalTimeout(step, minTimeout, maxTimeout, timeout);
                 DBG("TIMEOUT DISCOVERED - Used Value = %d seconds", g_timeout);
-			
+
                 // --------------------------------------------------------------------------------------
                 // Will stop the pthread (2)
                 // --------------------------------------------------------------------------------------
                 stunThreadData->bExitWindow = false;
 
 	} // IF
-	
+
 	// --------------------------------------------------------------------------------------
 	// Initialize the threadId to its initial value
 	// --------------------------------------------------------------------------------------
@@ -996,13 +996,13 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
 	pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 	DBG( "mutex unlocked" );
 	DBG( "Timeout discovery thread says good bye!" );
-	
+
 	// --------------------------------------------------------------------------------------
 	// Close the temporaly FD used for the socket
 	// --------------------------------------------------------------------------------------
 	DBG( "Closing the FD (%d) used for the socket ", fdTimeout );
 	close( fdTimeout );
-	
+
 	// --------------------------------------------------------------------------------------
 	// Exit the pthread (3)
 	// --------------------------------------------------------------------------------------
@@ -1015,7 +1015,7 @@ DM_STUN_timeoutDiscoveryThread(stunThreadStruct* stunThreadData)
  *
  * @param stunThreadData
  *
- * @remarks variables used : 
+ * @remarks variables used :
  * @remarks fdClient (R)
  * @remarks lastStunMessageReceivedType (R)
  * @remarks stunServer (R)
@@ -1027,10 +1027,10 @@ bool
 DM_STUN_sendManagement(stunThreadStruct* stunThreadData)
 {
 	bool	bRet = false;
- 
+
 	DBG( "Send STUN Message to the Server" );
 	DBG( "lastStunMessageReceivedType = '%s' ", g_DBG_nameTypeMessage[stunThreadData->lastStunMessageReceivedType] );
-	
+
 	// --------------------------------------------------------------
 	// If the previous message received was a BINDING ERROR RESPONSE
 	// --------------------------------------------------------------
@@ -1049,7 +1049,7 @@ DM_STUN_sendManagement(stunThreadStruct* stunThreadData)
 					    &(stunThreadData->password), 0, 0 );
 		stunThreadData->lastStunMessageReceivedType = NONE;
 	} // IF
-	
+
 	// --------------------------------------------------------------
 	// Or a normal BINDING RESPONSE
 	// --------------------------------------------------------------
@@ -1101,7 +1101,7 @@ DM_STUN_sendManagement(stunThreadStruct* stunThreadData)
 			DBG( "Sending a BINDING RESPONSE message       : OK " );
 		} // IF
 	} // IF
-	
+
 	return( bRet );
 } // DM_STUN_sendManagement
 
@@ -1109,9 +1109,9 @@ DM_STUN_sendManagement(stunThreadStruct* stunThreadData)
  * @brief read STUN and UDP messages
  *
  * @param stunThreadData
- * 
- * @remarks variables used : 
- * 
+ *
+ * @remarks variables used :
+ *
  * @remarks natReceivedPort (R/W)
  * @remarks stunClientPort (R)
  * @remarks fdClient (R)
@@ -1133,13 +1133,13 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 	int      elapsedTime    = 0;			// Time in seconds
 	int      timeBeginLoop  = 0;			// Time in seconds
 	int      timeout        = 0;			// Time in seconds
-	struct   timezone tz;	
-	struct   timeval  tv; 
-	UInt8    natDetected;						// 
-	UInt8	   messageType                = NONE;			// 
-	UInt8	   stunMessageReceptionState  = ANY_RECEIVED;		// 
-	UInt16   natPortReceived            = UNKNOWN;		// 
-	UInt32   wanIpReceived              = UNKNOWN;		// 
+	struct   timezone tz;
+	struct   timeval  tv;
+	UInt8    natDetected;						//
+	UInt8	   messageType                = NONE;			//
+	UInt8	   stunMessageReceptionState  = ANY_RECEIVED;		//
+	UInt16   natPortReceived            = UNKNOWN;		//
+	UInt32   wanIpReceived              = UNKNOWN;		//
 	UInt64   timeStamp                  = 0;			// Unix timestamp (time since 1970 or epoch)
 	UInt64   messageId                  = 0;			// Unique string used for define a session
 	char     udpConnectionRequestAddress[UDP_CONNECTION_REQUEST_ADDRESS_SIZE];
@@ -1147,7 +1147,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 	struct   in_addr		tmp;
 	bool     timeoutDiscoveryMessageReceive	= false;
 	bool     timeoutReached                 = false;
-	
+
 	// Memset to 0 tmp
 	memset((void *) &tmp, 0x00, sizeof(tmp));
 
@@ -1158,7 +1158,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 
 	pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 
-	
+
 	DBG( "----- BEFORE THE MAIN LOOP of the DM_STUN_readManagement function ----" );
 	do
 	{
@@ -1168,7 +1168,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 		DBG( "-> Before to read the message... " );
 		messageType   = DM_STUN_readMessage( stunThreadData, (timeout-elapsedTime), &wanIpReceived, &natPortReceived, &messageId, &timeStamp );
 		DBG( "<- After to read the message. " );
-		
+
 		// --------------------------------------------------------------
 		// all the UDP request will be considered. Its allows to deal with all this "important" requests...
 		// all the TIMEOUT_RESPONSE will be considered.
@@ -1184,14 +1184,14 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 				INFO( "NONE message received : timeout expiration." );
 				timeoutReached = true;
 				break;
-			
+
 			// --------------------------------------------------------------
 			// Receiving an unknown message
 			// --------------------------------------------------------------
 			case MESSAGE_UNKNOWN:
 				INFO( "MESSAGE_UNKNWON message received." );
 				break;
-			
+
 			// --------------------------------------------------------------
 			// Receiving an UDP connection Request
 			// --------------------------------------------------------------
@@ -1208,14 +1208,14 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 						if ( FALSE == maxConnectionPerPeriodReached( stunThreadData->connectionFreqArray ) )
 						{
 							newConnectionRequestAllowed( stunThreadData->connectionFreqArray );
-							
+
 							// --------------------------------------------------------------
 							// Ask to DM_Engine to open the session
 							// --------------------------------------------------------------
 							if ( 0 == DM_ENG_RequestConnection( DM_ENG_EntityType_SYSTEM ) )
 							{
                 						INFO( "The ACS is aware of the UDP REQUEST with message Id=%lld and time stamp=%lld", messageId, timeStamp );
-								
+
 								// --------------------------------------------------------------
 								// Only one connection a time
 								// --------------------------------------------------------------
@@ -1229,7 +1229,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 					} // IF
 				}
 				break;
-			
+
 			// --------------------------------------------------------------
 			// Other cases
 			// --------------------------------------------------------------
@@ -1253,7 +1253,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 
 					return;
 				} // IF
-				
+
 				// --------------------------------------------------------------
 				// If the pthread (3) is not started yet AND if the external WanIP address haven't been received,
 				// don't force to exit this read funtion.
@@ -1262,7 +1262,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 				{
 					DBG( "The timeout pthread is not launched AND the WanIP have not been found yet. Continuing..." );
 				} // IF
-				
+
 				// --------------------------------------------------------------
 				// All the STUN message are managed here
 				// Except the TIMEOUT_RESPONSE or a BindingErrorResponse
@@ -1271,7 +1271,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 				if ( stunThreadData->wanIp != wanIpReceived )
 				{
 					DBG( "NEW WAN IP : first message received with this IP!!!" );
-					
+
 					// --------------------------------------------------------------
 					// It's necessary a BINDING_REPONSE OR a MSG_INTEGRITY_RESPONSE message
 					// --------------------------------------------------------------
@@ -1283,7 +1283,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 					} // IF
 					stunThreadData->wanIp                   = wanIpReceived;
 					stunThreadData->natReceivedPort.binding = natPortReceived;
-					
+
 					// --------------------------------------------------------------
 					// Check if we can notificate in thi scope ?
 					// Data to update : STUN_UDP_CONNEXION_REQUEST_ADDRESS (IP_ADDR:PORT)
@@ -1294,7 +1294,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 					{
 						DBG( "Notificate the STUN_UDP_CONNEXION_REQUEST_ADDRESS..." );
 						tmp.s_addr = wanIpReceived;
-						snprintf( udpConnectionRequestAddress, 
+						snprintf( udpConnectionRequestAddress,
 						  	UDP_CONNECTION_REQUEST_ADDRESS_SIZE,
 						  	"%s:%u",
 						  	inet_ntoa(tmp),
@@ -1303,7 +1303,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 					} else {
 						DBG( "No need to notificate the STUN_UDP_CONNEXION_REQUEST_ADDRESS..." );
 					} // IF
-					
+
 					// --------------------------------------------------------------
 					// First message send to the STUN server to inform that the @ IP has changed
 					// this message MUST be send several times to prevent the UDP package loss
@@ -1313,7 +1313,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 							     BINDING_CHANGE,
 							     &(stunThreadData->username),
 							     NULL, 0, 0 );
-					
+
 					// --------------------------------------------------------------
 					// Indicates that the BINDING_CHANGE has been sended.
 					// --------------------------------------------------------------
@@ -1324,7 +1324,7 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 						WARN( "Changed the stunWanIpNotification flag to VALIDATED " );
 						stunThreadData->stunWanIpNotification = VALIDATED;
 					} // IF
-					
+
 					// --------------------------------------------------------------
 					//                           NAT Detection
 					// --------------------------------------------------------------
@@ -1354,11 +1354,11 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 						DBG( "No need to notificate the STUN_NAT_DETECTED..." );
 					} // IF
 				} // IF
-				
+
 
 				break;
 		} // SWITCH
-		
+
 		if ( ALREADY_RECEIVED != stunMessageReceptionState )
 		{
 		  if ( (true == timeoutReached) && (BINDING_ERROR_RESPONSE == stunThreadData->lastStunMessageReceivedType) ) {
@@ -1376,16 +1376,16 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
 				g_DBG_nameTypeMessage[messageType],
 				g_DBG_nameTypeMessage[stunThreadData->lastStunMessageReceivedType] );
 		} // IF
-		
+
 		// Execution time measurement
 		gettimeofday( &tv, &tz );
 		elapsedTime += tv.tv_sec-timeBeginLoop;
 		DBG( "Elapsed time= %ds with timeout= %ds", elapsedTime, timeout );
 		DBG( "----- END OF THE MAIN LOOP of the DM_STUN_readManagement function ----" );
 	} while ( elapsedTime<timeout );
-	
 
-	
+
+
 	if ( ANY_RECEIVED == stunMessageReceptionState )
 	{
 	  	if ( (true == timeoutReached) && (BINDING_ERROR_RESPONSE == stunThreadData->lastStunMessageReceivedType) ) {
@@ -1406,9 +1406,9 @@ DM_STUN_readManagement(stunThreadStruct* stunThreadData)
  * @brief read STUN and UDP messages
  *
  * @param stunThreadData
- * 
- * @remarks variables used : 
- * 
+ *
+ * @remarks variables used :
+ *
  * @remarks natReceivedPort (R/W)
  * @remarks stunClientPort (R)
  * @remarks fdClient (R)
@@ -1430,13 +1430,13 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 	int      elapsedTime    = 0;			// Time in seconds
 	int      timeBeginLoop  = 0;			// Time in seconds
 	int      timeout        = 0;			// Time in seconds
-	struct   timezone tz;	
-	struct   timeval  tv; 
-	UInt8    natDetected;						// 
-	UInt8	   messageType                = NONE;			// 
-	UInt8	   stunMessageReceptionState  = ANY_RECEIVED;		// 
-	UInt16   natPortReceived            = UNKNOWN;		// 
-	UInt32   wanIpReceived              = UNKNOWN;		// 
+	struct   timezone tz;
+	struct   timeval  tv;
+	UInt8    natDetected;						//
+	UInt8	   messageType                = NONE;			//
+	UInt8	   stunMessageReceptionState  = ANY_RECEIVED;		//
+	UInt16   natPortReceived            = UNKNOWN;		//
+	UInt32   wanIpReceived              = UNKNOWN;		//
 	UInt64   timeStamp                  = 0;			// Unix timestamp (time since 1970 or epoch)
 	UInt64   messageId                  = 0;			// Unique string used for define a session
 	char     udpConnectionRequestAddress[UDP_CONNECTION_REQUEST_ADDRESS_SIZE];
@@ -1447,7 +1447,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 
 	// Memset to 0 tmp
 	memset((void *) &tmp, 0x00, sizeof(tmp));
-		
+
 	pthread_mutex_lock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 
 	timeout = stunThreadData->nTimeout;
@@ -1455,7 +1455,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 
 	pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 
-	
+
 	DBG( "----- BEFORE THE MAIN LOOP of the DM_STUN_readManagement function ----" );
 	do
 	{
@@ -1465,7 +1465,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 		DBG( "-> Before to read the message... " );
 		messageType   = DM_STUN_readMessage( stunThreadData, (timeout-elapsedTime), &wanIpReceived, &natPortReceived, &messageId, &timeStamp );
 		DBG( "<- After to read the message. " );
-		
+
 		// --------------------------------------------------------------
 		// all the UDP request will be considered. Its allows to deal with all this "important" requests...
 		// all the TIMEOUT_RESPONSE will be considered.
@@ -1481,7 +1481,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 				INFO( "NONE message received : timeout expiration." );
 				timeoutReached = true;
 				break;
-		
+
 			// --------------------------------------------------------------
 			// Other cases
 			// --------------------------------------------------------------
@@ -1492,14 +1492,14 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 				// Condition 1 : bThrirdThreadLaunched  = 1             -> the discovery pthread have been launched
 				// Condition 2 : stunThreadData->wanIp != wanIpReceived -> the wan IP have been discovered !!
 				// --------------------------------------------------------------
-				
+
 				// A least one message received - Set TimeoutState to TIMEOUT_RECEIVED
-                                pthread_mutex_lock( &(stunThreadData->timeoutThreadData.mutex_lock) );
-                                DBG( "Set the TimeoutState to TIMEOUT_RECEIVED (Current Timeout = %d)", timeout );
+        pthread_mutex_lock( &(stunThreadData->timeoutThreadData.mutex_lock) );
+        DBG( "Set the TimeoutState to TIMEOUT_RECEIVED (Current Timeout = %d)", timeout );
 				stunThreadData->TimeoutState = TIMEOUT_RECEIVED;
 				timeoutDiscoveryMessageReceive = true;
-				pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );			
-				
+				pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
+
 				DBG( "bThrirdThreadLaunched=%d (true or false) ", stunThreadData->bThrirdThreadLaunched );
 				if   (stunThreadData->wanIp != wanIpReceived) { DBG( "stunThreadData->wanIp != wanIpReceived" ); }
 				else					      { DBG( "stunThreadData->wanIp  = wanIpReceived" ); }
@@ -1515,7 +1515,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 
 					return;
 				} // IF
-				
+
 				// --------------------------------------------------------------
 				// If the pthread (3) is not started yet AND if the external WanIP address haven't been received,
 				// don't force to exit this read funtion.
@@ -1524,7 +1524,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 				{
 					DBG( "The timeout pthread is not launched AND the WanIP have not been found yet. Continuing..." );
 				} // IF
-				
+
 				// --------------------------------------------------------------
 				// All the STUN message are managed here
 				// Except the TIMEOUT_RESPONSE or a BindingErrorResponse
@@ -1534,7 +1534,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 				if ( stunThreadData->wanIp != wanIpReceived )
 				{
 					DBG( "NEW WAN IP : first message received with this IP!!!" );
-					
+
 					// --------------------------------------------------------------
 					// It's necessary a BINDING_REPONSE OR a MSG_INTEGRITY_RESPONSE message
 					// --------------------------------------------------------------
@@ -1546,7 +1546,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 					} // IF
 					stunThreadData->wanIp                   = wanIpReceived;
 					stunThreadData->natReceivedPort.binding = natPortReceived;
-					
+
 					// --------------------------------------------------------------
 					// Check if we can notificate in thi scope ?
 					// Data to update : STUN_UDP_CONNEXION_REQUEST_ADDRESS (IP_ADDR:PORT)
@@ -1557,7 +1557,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 					{
 						DBG( "Notificate the STUN_UDP_CONNEXION_REQUEST_ADDRESS..." );
 						tmp.s_addr = wanIpReceived;
-						snprintf( udpConnectionRequestAddress, 
+						snprintf( udpConnectionRequestAddress,
 						  	UDP_CONNECTION_REQUEST_ADDRESS_SIZE,
 						  	"%s:%u",
 						  	inet_ntoa(tmp),
@@ -1566,7 +1566,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 					} else {
 						DBG( "No need to notificate the STUN_UDP_CONNEXION_REQUEST_ADDRESS..." );
 					} // IF
-					
+
 					// --------------------------------------------------------------
 					// First message send to the STUN server to inform that the @ IP has changed
 					// this message MUST be send several times to prevent the UDP package loss
@@ -1576,7 +1576,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 							     BINDING_CHANGE,
 							     &(stunThreadData->username),
 							     NULL, 0, 0 );
-					
+
 					// --------------------------------------------------------------
 					// Indicates that the BINDING_CHANGE has been sended.
 					// --------------------------------------------------------------
@@ -1587,7 +1587,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 						WARN( "Changed the stunWanIpNotification flag to VALIDATED " );
 						stunThreadData->stunWanIpNotification = VALIDATED;
 					} // IF
-					
+
 					// --------------------------------------------------------------
 					//                           NAT Detection
 					// --------------------------------------------------------------
@@ -1617,10 +1617,10 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 						DBG( "No need to notificate the STUN_NAT_DETECTED..." );
 					} // IF
 				} // IF
-				
+
 				break;
 		} // SWITCH
-		
+
 		if ( ALREADY_RECEIVED != stunMessageReceptionState )
 		{
 		  if ( (true == timeoutReached) && (BINDING_ERROR_RESPONSE == stunThreadData->lastStunMessageReceivedType) ) {
@@ -1638,14 +1638,14 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 				g_DBG_nameTypeMessage[messageType],
 				g_DBG_nameTypeMessage[stunThreadData->lastStunMessageReceivedType] );
 		} // IF
-		
+
 		// Execution time measurement
 		gettimeofday( &tv, &tz );
 		elapsedTime += tv.tv_sec-timeBeginLoop;
 		DBG( "Elapsed time= %ds with timeout= %ds", elapsedTime, timeout );
 		DBG( "----- END OF THE MAIN LOOP of the DM_STUN_readManagement function ----" );
 	} while ( elapsedTime<timeout );
-	
+
 	// ----------------------------------
 	// Check for the Timeout : no Bind response received
 	// ----------------------------------
@@ -1667,7 +1667,7 @@ DM_STUN_readManagementTimeout(stunThreadStruct* stunThreadData)
 	} // IF
 	pthread_mutex_unlock( &(stunThreadData->timeoutThreadData.mutex_lock) );
 	DBG( "Unlock the mutex " );
-	
+
 	if ( ANY_RECEIVED == stunMessageReceptionState )
 	{
 	  	if ( (true == timeoutReached) && (BINDING_ERROR_RESPONSE == stunThreadData->lastStunMessageReceivedType) ) {
@@ -1707,7 +1707,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
 	int		nbTransmitMessage	= 1;
 	StunMessage	request;
 	StunAtrString	hmacKey;
-	
+
 	// Configure the common message content
 	memset( &request, 0x00, sizeof(StunMessage) );
 	hmacKey.sizeValue      = 0;
@@ -1720,7 +1720,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
 		request.msgHdr.id.octet[i+2] = r >> 16;
 		request.msgHdr.id.octet[i+3] = r >> 24;
 	} // FOR
-	
+
 	// ---------------------------------------------------------
 	// Find the right message
 	// ---------------------------------------------------------
@@ -1742,7 +1742,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
 			request.hasUsername                        = true;
 			request.username                           = *username;
 			break;
-		
+
 		// ---------------------------------------------------------
 		// BINDING_CHANGE message
 		// ---------------------------------------------------------
@@ -1762,7 +1762,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
 			request.hasUsername                        = true;
 			request.username                           = *username;
 			break;
-			
+
 		// ---------------------------------------------------------
 		// MSG_INTEGRITY message
 		// ---------------------------------------------------------
@@ -1787,7 +1787,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
 			request.hasMessageIntegrity                = TRUE;
 			hmacKey                                    = *password;
 			break;
-			
+
 		// ---------------------------------------------------------
 		// TIMEOUT_DISCOVERY message
 		// ---------------------------------------------------------
@@ -1798,7 +1798,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
 			request.responseAddress.ipv4.port = receptionPortWan;
 			break;
 	}
-	
+
 	msgLen = stunEncodeMessage(&request, msg, msgLen, &hmacKey);
 	for( i=0 ; i<nbTransmitMessage ; i++ )
 	{
@@ -1810,7 +1810,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
 			EXEC_ERROR("FAIL to send the STUN message");
 		} // IF
 	} // IF
-	
+
 	return( err );
 } // DM_STUN_sendMessage
 
@@ -1823,7 +1823,7 @@ DM_STUN_sendMessage(Socket fdSocket, StunAddress4* stunServer, UInt8 messageType
  * @param port (W)
  * @param messageId (W)
  * @param timeStamp (W)
- * 
+ *
  * @remarks variables used in the stunThreadData :
  * @remarks fdSocket (R)
  * @remarks username (R)
@@ -1853,10 +1853,10 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 	char			username[STUN_MAX_STRING];
 	char			cnonce[STUN_MAX_STRING];
 	StunAtrIntegrity	signatureReceived;
-	
+
 	// Memset to 0 tmp
 	memset((void *) &tmp, 0x00, sizeof(tmp));
-	
+
 	// ----------------------------------------------------------------
 	// Initialisation
 	// ----------------------------------------------------------------
@@ -1866,7 +1866,7 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 	timeout.tv_usec = 0;
 	FD_ZERO( &set );
 	FD_SET( stunThreadData->fdClient, &set );
-	
+
 	// ----------------------------------------------------------------
 	// Wait for an UDP message from the STUN server
 	// ----------------------------------------------------------------
@@ -1904,7 +1904,7 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 					} else if ( answerMessage.hasMessageIntegrity ) {
 						DBG( "answerMessage.hasReflectedFrom is not SET" );
 						INFO( "MSG_INTEGRITY_RESPONSE received" );
-						
+
 						// ----------------------------------------------------------------
 						// Let's check if the hmac is ok
 						// ----------------------------------------------------------------
@@ -1934,7 +1934,7 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 					EXEC_ERROR( "Unknown STUN message type. probably an ALGORITHM issue" );
 					ASSERT( FALSE );
 				} // IF
-				
+
 				// ----------------------------------------------------------------
 				// Extract the NAT ip and port number in host byte order needed for the dm_lib_udp
 				// ----------------------------------------------------------------
@@ -1965,7 +1965,7 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 				{
 					messageType = UDP_REQUEST;
 					DBG( "UDP_REQUEST received. the message is HTTP/1.1 compliant and the Method GET is used" );
-					
+
 					// ----------------------------------------------------------------
 					// Extract the parameter from the querystring
 					// ----------------------------------------------------------------
@@ -1986,14 +1986,14 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 							messageType = MESSAGE_UNKNOWN;
 						} else {
 							DBG( "Validation of the two usernames : OK " );
-							
+
 							// ----------------------------------------------------------------
 							// let's prepare the signature
 							// ----------------------------------------------------------------
 							char* msg = (char*)calloc( 1, 2*sizeof(UInt64)+2*STUN_MAX_STRING );
 							snprintf( msg, (2*sizeof(UInt64)+2*STUN_MAX_STRING), "%lld%lld%s%s", *timeStamp, *messageId, username, cnonce );
 							DBG( "Message (ts msgid username conce) = '%s' (size=%d) ", (char*)msg, strlen(msg) );
-							
+
 							// ----------------------------------------------------------------
 							// Let's compare the two HMACS WITH the SHA1 crypto algorithm
 							// ----------------------------------------------------------------
@@ -2004,7 +2004,7 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 							} else {
 								DBG( "Validation of the two passwords : OK " );
 							} // IF
-							
+
 							if ( NULL != msg )
 							{
 								free( msg );
@@ -2018,7 +2018,7 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
 			} // IF
 		} // IF
 	} // IF
-	
+
 	return( messageType );
 } // DM_STUN_readMessage
 
@@ -2026,11 +2026,11 @@ DM_STUN_readMessage(stunThreadStruct* stunThreadData,int timeoutAvailable, UInt3
  * @brief stopThread
  *
  * @param stunThreadData (R)
- * 
+ *
  * @remarks cancel the timeoutThread and close the sockets
  *          this function is called when the stunThread is cancelled
  *          thanks to pthread_cleanup_pop function in the stunTread function
- * 
+ *
  * @return pthread_exit(0);
  *
  */
@@ -2047,7 +2047,7 @@ void DM_STUN_stopThread(stunThreadStruct* stunThreadData)
 	close( stunThreadData->fdClient );
 	DBG(  "the binding socket is closed" );
 	INFO( "STUN client thread says Good Bye!!!" );
-	
+
 	pthread_exit( 0 );
 } // DM_STUN_stopThread
 
@@ -2073,7 +2073,7 @@ DM_STUN_updateValuesDatamodel(UInt32 pWanIp, UInt16 pPort, UInt8 pNatDetected)
 
 	// Memset to 0 tmp
 	memset((void *) &tmp, 0x00, sizeof(tmp));
-			
+
 	// ------------------------------------------------
 	// Update the UDP_CONNECTION_REQUEST_ADDRESS (string)
 	// ------------------------------------------------
@@ -2094,7 +2094,7 @@ DM_STUN_updateValuesDatamodel(UInt32 pWanIp, UInt16 pPort, UInt8 pNatDetected)
 		EXEC_ERROR( "Updating the UDP CONNECTION REQUEST ADDRESS value : NOK " );
 		bRet = false;
 	} // IF
-	
+
 	// ------------------------------------------------
 	// Update the STUN_NAT_DETECTED (boolean)
 	// ------------------------------------------------
@@ -2107,7 +2107,7 @@ DM_STUN_updateValuesDatamodel(UInt32 pWanIp, UInt16 pPort, UInt8 pNatDetected)
 		EXEC_ERROR( "Updating the UDP CONNECTION REQUEST ADDRESS value : NOK " );
 		bRet = false;
 	} // IF
-	
+
 	// ------------------------------------------------
 	// Check the result of the two last update
 	// ------------------------------------------------
@@ -2116,7 +2116,7 @@ DM_STUN_updateValuesDatamodel(UInt32 pWanIp, UInt16 pPort, UInt8 pNatDetected)
 	} else {
 		EXEC_ERROR( "Update of the STUN dataModel values : NOK " );
 	} // IF
-	
+
 	return( bRet );
 } // DM_STUN_updateValuesDatamodel
 
@@ -2124,8 +2124,8 @@ DM_STUN_updateValuesDatamodel(UInt32 pWanIp, UInt16 pPort, UInt8 pNatDetected)
  * @brief Initialize all the STUN values
  *
  * @param stunThreadData
- * 
- * @remarks variables used : 
+ *
+ * @remarks variables used :
  * @remarks natReceivedPort (R/W)
  * @remarks stunClientBindingPort (R)
  * @remarks countStopTimeoutDiscoveryThread (R/W)
@@ -2141,7 +2141,7 @@ DM_STUN_initValues(stunThreadStruct *stunThreadData)
 {
 	char*		getParameterResult = NULL;
 	struct in_addr	tmp;
-	
+
 	DBG("STUN - DM_STUN_initValues");
 
 	// Memset to 0 tmp
@@ -2151,14 +2151,14 @@ DM_STUN_initValues(stunThreadStruct *stunThreadData)
 	stunThreadData->natReceivedPort.binding			= UNKNOWN;
 	stunThreadData->natReceivedPort.timeout			= UNKNOWN;
 	stunThreadData->lastStunMessageReceivedType		= MESSAGE_UNKNOWN;
-	
+
 	// By default, the natDetected flag is set to false
 	stunThreadData->natDetected				= FALSE;
 	stunThreadData->countStopTimeoutDiscoveryThread		= 0;
 	stunThreadData->stunWanIpNotification			= NOT_NOTIFIED;
-	
+
 	// __retrieve variables from DB__
-	
+
 	// ******** RETRIEVE THE STUN USERNAME ********
 	while(false == DM_STUN_getParameterValue( STUN_USERNAME,&getParameterResult ) ){
 	  WARN("STUN - No STUN_USERNAME. Wait a while (parameter value could be set later)");
@@ -2174,22 +2174,22 @@ DM_STUN_initValues(stunThreadStruct *stunThreadData)
 	stunThreadData->username.sizeValue = strlen(stunThreadData->username.value);
 	free( getParameterResult );
 
-  // ******** RETRIEVE THE STUN PASSWORD ********	
+  // ******** RETRIEVE THE STUN PASSWORD ********
 	while(false == DM_STUN_getParameterValue( STUN_PASSWORD,&getParameterResult ) ) {
 	  WARN("STUN - No STUN_PASSWORD. Wait a while (parameter value could be set later)");
 	  sleep(STUN_SLEEP_TIME_ON_PARAM_VALUE_WAIT);
 	}
 	if(NULL == getParameterResult) {
 	  DBG("STUN - Password = None (no value)");
-	snprintf( stunThreadData->password.value, STUN_MAX_STRING, "%s", "" );	  
+	snprintf( stunThreadData->password.value, STUN_MAX_STRING, "%s", "" );
   } else {
 	  DBG("STUN - Password = %s", getParameterResult);
-	  snprintf( stunThreadData->password.value, STUN_MAX_STRING, "%s", getParameterResult );	
-  }	
-	
+	  snprintf( stunThreadData->password.value, STUN_MAX_STRING, "%s", getParameterResult );
+  }
+
 	stunThreadData->password.sizeValue=strlen( stunThreadData->password.value );
 	free( getParameterResult );
-	
+
 	// ******** RETRIEVE THE STUN SERVER ADDRESS ********
 	while(false == DM_STUN_getParameterValue( STUN_SERVER_ADDRESS, &getParameterResult ) ||
 	      (NULL == getParameterResult)) {
@@ -2211,10 +2211,10 @@ DM_STUN_initValues(stunThreadStruct *stunThreadData)
 	}
   DBG("STUN - ServerPort = %s", getParameterResult);
 
-	
+
 	stunThreadData->stunServer.port = (UInt16)atol( getParameterResult );
 	free( getParameterResult );
-	
+
 	if ( ( stunThreadData->stunServer.addr == 0) || (stunThreadData->stunServer.port == 0) )
 	{
 		DBG( "there are no STUN server address or port. the ACS address will be used" );
@@ -2230,7 +2230,7 @@ DM_STUN_initValues(stunThreadStruct *stunThreadData)
 		free( getParameterResult );
 		stunThreadData->stunServer.port = DEFAULT_ACS_PORT;
 	} // IF
-	
+
 	// set the timeout to the minimum
 	while(false == DM_STUN_getParameterValue( STUN_MIN_KEEP_ALIVE_PERIOD, &getParameterResult ) ||
 	      (NULL == getParameterResult)) {
@@ -2263,7 +2263,7 @@ DM_STUN_hextoAscii(u8* hexaMsg, u8 nbHexaDigit)
 	char*	tmpStr  = NULL;
 	int	i	= 0;
 	char	charStr[3];
- 
+
 	tmpStr = (char*)malloc( nbHexaDigit*20 );
 	memset( tmpStr, '\0', nbHexaDigit );
 	for( i=0; i<nbHexaDigit; i++ )
@@ -2276,7 +2276,7 @@ DM_STUN_hextoAscii(u8* hexaMsg, u8 nbHexaDigit)
 } // DM_STUN_hextoAscii
 
 /**
- * @brief DM_STUN_isHmacIdentical : compare the received HMAC-SHA1 with the generated 
+ * @brief DM_STUN_isHmacIdentical : compare the received HMAC-SHA1 with the generated
  *
  * @param signatureReceived
  * @param msg
@@ -2293,12 +2293,12 @@ DM_STUN_isHmacIdentical(StunAtrIntegrity* signatureReceived, char* msg, UInt16 m
 	char*			AsciiSignatureGenerated = NULL;
 	bool			err			= FALSE;
 	//int			i;
-	
+
 	// --------------------------------------------------------------------------
 	// Initialization of the HexaSignatureGenerated string
 	// --------------------------------------------------------------------------
 	memset( &HexaSignatureGenerated, 0x00, HMAC_SIZE );
-	
+
 	// --------------------------------------------------------------------------
 	// Generate the MAC_SHA1 according to the informations sent by the ACS server
 	// --------------------------------------------------------------------------
@@ -2307,13 +2307,13 @@ DM_STUN_isHmacIdentical(StunAtrIntegrity* signatureReceived, char* msg, UInt16 m
 	DBG( "Signature received                   = '%s'           ", signatureReceived->hash              );
 	DBG( "Message                              = '%s' (size=%d) ", msg, strlen(msg)                     );
 	hmac_sha1( (u8*)password->value, password->sizeValue, (u8*)msg, msgLength, HexaSignatureGenerated.hash  );
-	
+
 	// --------------------------------------------------------------------------
 	// Convert the hex string previously generated into aan ascii one
 	// --------------------------------------------------------------------------
 	AsciiSignatureGenerated = DM_STUN_hextoAscii( HexaSignatureGenerated.hash, HMAC_SIZE );
 	DBG( "HASH SHA1 generated = '%s' ", (char*)AsciiSignatureGenerated );
-	
+
 	// --------------------------------------------------------------------------
 	// Compare the two ASCII strings
 	// --------------------------------------------------------------------------
@@ -2325,7 +2325,7 @@ DM_STUN_isHmacIdentical(StunAtrIntegrity* signatureReceived, char* msg, UInt16 m
 	} else {
 		EXEC_ERROR( "HMAC are not identical" );
 	} // IF
-	
+
 	// --------------------------------------------------------------------------
 	// Free the memory allocated for the Hex2Ascii conversion
 	// --------------------------------------------------------------------------
@@ -2334,7 +2334,7 @@ DM_STUN_isHmacIdentical(StunAtrIntegrity* signatureReceived, char* msg, UInt16 m
 		free( AsciiSignatureGenerated );
 		AsciiSignatureGenerated = NULL;
 	} // IF
-	
+
 	return( err );
 } // DM_STUN_isHmacIdentical
 
@@ -2344,11 +2344,11 @@ DM_STUN_isHmacIdentical(StunAtrIntegrity* signatureReceived, char* msg, UInt16 m
  * @param fdSocket (R/W)
  * @param ip (R)
  * @param port (R)
- * 
+ *
  * @remarks cancel the timeoutThread and close the sockets
  *          this function is called when the stunThread is cancelled
  *          thanks to pthread_cleanup_pop function in the stunTread function
- * 
+ *
  * @return pthread_exit(0);
  *
  */
@@ -2380,7 +2380,7 @@ DM_STUN_extractUdpParameters(char* message, UInt64* timeStamp, UInt64* messageId
 	UInt16	i		= 0;
 	bool	err		= TRUE;	// a mettre en true ?
 	char	pBuffer[50];
-	
+
 	// -------------------------------------------------------------------------------
 	// Parsing the querystring in order to extract the different items
 	// -------------------------------------------------------------------------------
@@ -2401,7 +2401,7 @@ DM_STUN_extractUdpParameters(char* message, UInt64* timeStamp, UInt64* messageId
 			*timeStamp = /*ntohl(*/ (unsigned long long)strtoull( pBuffer, (char**)NULL, 10 ) /*)*/;
 			DBG( "TimeStamp= %lld (size=%d) ", *timeStamp, size );
 		} // IF
-		
+
 		// -------------------------------------------------------------------------------
 		// &id=
 		// -------------------------------------------------------------------------------
@@ -2417,7 +2417,7 @@ DM_STUN_extractUdpParameters(char* message, UInt64* timeStamp, UInt64* messageId
 			*messageId = /*ntohl(*/ (unsigned long long)strtoull( pBuffer, (char**)NULL, 10 ) /*)*/;
 			DBG( "MessageId= %lld (size=%d) ", *messageId, size );
 		} // IF
-		
+
 		// -------------------------------------------------------------------------------
 		// &un=
 		// -------------------------------------------------------------------------------
@@ -2432,7 +2432,7 @@ DM_STUN_extractUdpParameters(char* message, UInt64* timeStamp, UInt64* messageId
 			username[size]='\0';
 			DBG( "Username= %s (nb=%d)", username, strlen(username) );
 		} // IF
-		
+
 		// -------------------------------------------------------------------------------
 		// &cn=
 		// -------------------------------------------------------------------------------
@@ -2447,7 +2447,7 @@ DM_STUN_extractUdpParameters(char* message, UInt64* timeStamp, UInt64* messageId
 			cnonce[size]='\0';
 			DBG( "Cnonce= '%s' (size=%d - nb=%d) ", cnonce, size, strlen(cnonce) );
 		} // IF
-		
+
 		// -------------------------------------------------------------------------------
 		// &sig=
 		// -------------------------------------------------------------------------------
@@ -2464,14 +2464,14 @@ DM_STUN_extractUdpParameters(char* message, UInt64* timeStamp, UInt64* messageId
 			DBG( "Signature received = '%s' ", pSigTab );
 		} // IF
 	} // FOR
-	
+
 	// -------------------------------------------------------------------------------
 	// Check that we have extract the right number of parameters from the querystring
 	// -------------------------------------------------------------------------------
 	if ( parametersFound == 5 ) {
 		err = TRUE;
 	} // IF
-	
+
 	return( err );
 } // DM_STUN_extractUdpParameters
 
@@ -2489,36 +2489,36 @@ DM_STUN_getParameterValue(char* parameterName, char** value)
 {
 	DM_ENG_ParameterValueStruct**	pResult = NULL;
 	char*				pParameterName[2];
-	int				err;
+	int				  err;
 	bool				bRet    = true;
-	
+
 	DBG("STUN - DM_STUN_getParameterValue - parameterName = %s", parameterName);
   *value = NULL;
-  
+
 	// -------------------------------------------------------------------------------
 	// Initialize the array for the DM_ENGINE call with a NULL at the end
 	// -------------------------------------------------------------------------------
 	pParameterName[0]=parameterName;
 	pParameterName[1]=NULL;
-	
+
 	// -------------------------------------------------------------------------------
-	// Request the value of the parameter name given fro mthe DM_Engine
+	// Request the value of the parameter name given from the DM_Engine
 	// -------------------------------------------------------------------------------
 	err = DM_ENG_GetParameterValues( DM_ENG_EntityType_ANY, (char**)pParameterName, &pResult );
-	
+
 	if ( (err == 0) && (pResult != NULL) && (strcmp(parameterName, (char*)pResult[0]->parameterName) == 0 ) )
 	{
 		DBG( "Parameter name : %s = '%s' (type = %d)", (char*)pResult[0]->parameterName, (char*)pResult[0]->value, pResult[0]->type );
 		if(NULL != (char*)pResult[0]->value ) {
 		  *value= strdup( (char*)pResult[0]->value );
-		} 
+		}
 		DM_ENG_deleteTabParameterValueStruct(pResult);
 	} else {
 		EXEC_ERROR( "error code = %d ", err);
 
 		bRet = false;
 	} // IF
-	
+
 	return( bRet );
 } // DM_STUN_getParameterValue
 
@@ -2542,7 +2542,7 @@ DM_STUN_checkAllStunParameters()
 	char                          tmpStr[2];
 	int                           databaseOK = 1; // -1 when not OK (default is OK)
 	DBG( "STUN - Make sure all required STUN parameter are in the datamodel" );
-	
+
 	pParameterName[0]  = STUN_UDP_CONNEXION_REQUEST_ADDRESS;
 	pParameterName[1]  = STUN_UDP_CONNEXION_REQUEST_NOTIFICATION_LIMIT;
 	pParameterName[2]  = STUN_ENABLE;
@@ -2558,7 +2558,7 @@ DM_STUN_checkAllStunParameters()
 	pParameterName[12] = CONNECTION_REQUEST_PASSWORD;
 	pParameterName[13] = ACS_ADDRESS;
 	pParameterName[14] = NULL;
-	
+
 	if ( 0 == DM_ENG_GetParameterValues(DM_ENG_EntityType_ANY, (char**)pParameterName, &pResult) ) {
 
 		if ( NULL != pResult ){
@@ -2567,7 +2567,7 @@ DM_STUN_checkAllStunParameters()
 
 				if ( NULL != pResult[i]->value ) {
 					DBG( "STUN - (i=%d) Parameter name : %s = '%s' (type = %d) ", i, (char*)pResult[i]->parameterName, (char*)pResult[i]->value, pResult[i]->type );
-					
+
 					if ( 0 == strcmp(STUN_MAX_KEEP_ALIVE_PERIOD, (char*)pResult[i]->parameterName) )
 					{
 						maxTimeout = atol(pResult[i]->value);
@@ -2576,9 +2576,9 @@ DM_STUN_checkAllStunParameters()
 					{
 						minTimeout = atol(pResult[i]->value);
 					} // IF
-					
+
 				} else { // No default Value
-				
+
 				  // No default Value --> Check parameters that request a default value
 				  if( (0 == strcmp(STUN_ENABLE,                (char*)pResult[i]->parameterName)) ||
 				      (0 == strcmp(STUN_SERVER_ADDRESS,        (char*)pResult[i]->parameterName)) ||
@@ -2587,33 +2587,33 @@ DM_STUN_checkAllStunParameters()
 				      (0 == strcmp(STUN_MIN_KEEP_ALIVE_PERIOD, (char*)pResult[i]->parameterName)) ||
 				      (0 == strcmp(LAN_IP,                     (char*)pResult[i]->parameterName)) ||
 				      (0 == strcmp(ACS_ADDRESS,                (char*)pResult[i]->parameterName)) ||
-				      (0 == strcmp(STUN_NAT_DETECTED,          (char*)pResult[i]->parameterName)) || 
+				      (0 == strcmp(STUN_NAT_DETECTED,          (char*)pResult[i]->parameterName)) ||
 				      (0 == strcmp(STUN_UDP_CONNEXION_REQUEST_NOTIFICATION_LIMIT, (char*)pResult[i]->parameterName)) ) {
 				     		EXEC_ERROR( "STUN - The '%s' parameter[%d] has a NULL value",    (char*)pResult[i]->parameterName, i );
-						
+
 						   // Datbase does not allow to support STUN
-						   databaseOK = -1; 
+						   databaseOK = -1;
 						  }
 				} // IF
 			} // FOR
 		} else {
 		  // Datbase does not allow to support STUN
-      databaseOK = -1; 
+      databaseOK = -1;
 			EXEC_ERROR( "STUN - The DM_ENG_GetParameterValues result is NULL " );
 		} // IF
-		
+
 		DM_ENG_deleteTabParameterValueStruct( pResult );
 	} else {
 		EXEC_ERROR( "STUN - Calling the DM_ENG_GetParameterValues : NOK" );
     // Datbase does not allow to support STUN
-    databaseOK = -1; 
+    databaseOK = -1;
 	} // IF
-	
+
 	if ( 1 == databaseOK ) {
 	  // Set dbStatus to TRUE
 		dbStatus = TRUE;
 		DBG("STUN - The database contains all the STUN values");
-		
+
 		if ( minTimeout < 0 )
 		{
 			EXEC_ERROR( "STUN - minTimeout<0" );
@@ -2621,7 +2621,7 @@ DM_STUN_checkAllStunParameters()
 			snprintf( tmpStr, 2, "%u", minTimeout );
 			DM_STUN_updateParameterValue( STUN_MIN_KEEP_ALIVE_PERIOD, DM_ENG_ParameterType_BOOLEAN, tmpStr );
 		} // IF
-		
+
 		if ( (minTimeout>maxTimeout) || (maxTimeout<0) )
 		{
 			EXEC_ERROR("STUN - minTimeout>maxTimeout or maxTimeout<0");
@@ -2633,8 +2633,8 @@ DM_STUN_checkAllStunParameters()
 	} else {
 		EXEC_ERROR( "STUN - The database doesn't contain all the STUN values (i=%d)", i );
 	} // IF
-	
-	
+
+
 	return dbStatus;
 } // DM_STUN_checkAllStunParameters
 
@@ -2655,10 +2655,10 @@ DM_STUN_updateParameterValue(char* parameterName, DM_ENG_ParameterType type, cha
 	DM_ENG_ParameterValueStruct*		pParameterList[2];
 	DM_ENG_ParameterStatus			status;
 	DM_ENG_SetParameterValuesFault**	faults = NULL;
-	
+
 	pParameterList[0] = DM_ENG_newParameterValueStruct(parameterName,type, value);
 	pParameterList[1] = NULL;
-	
+
 	DBG( "updating %s parameter with %s value", parameterName, value );
 	if ( DM_ENG_SetParameterValues( DM_ENG_EntityType_SYSTEM, pParameterList, "", &status, &faults) != 0 )
 	{
@@ -2674,14 +2674,14 @@ DM_STUN_updateParameterValue(char* parameterName, DM_ENG_ParameterType type, cha
 		bRet = true;
 		DBG( "Updating the '%s'='%s' parameter : OK ", parameterName, value );
 	} // IF
-	
+
 	// Free the memory previously allocated
 	DM_ENG_deleteParameterValueStruct( pParameterList[0] );
 	if ( NULL != faults )
 	{
 		DM_ENG_deleteTabSetParameterValuesFault( faults );
 	}
-	
+
 	return( bRet );
 } // DM_STUN_updateParameterValue
 
@@ -2691,15 +2691,14 @@ DM_STUN_ComputeGlobalTimeout(int _step, int _min, int _max, int _limit)
 {
   int timeoutComputed = _min;
   DBG("Compute the Global Timeout (step = %d, min = %d, max = %d, limit = %d)", _step, _min, _max, _limit);
-  
+
   timeoutComputed = _limit - (int)(_step * (TIMEOUT_PRECISION + 1)) - TIMEOUT_OFFSET; // Compute the used value (limit - (1.5 + 1) step - 5 sec)
-  
+
   if(timeoutComputed < _min) timeoutComputed = _min;
-  
+
   if(timeoutComputed > _max) timeoutComputed = _max;
-  
-  DBG("Computed Global Timeout = %d", timeoutComputed); 
-  
+
+  DBG("Computed Global Timeout = %d", timeoutComputed);
+
   return timeoutComputed;
 }
-
