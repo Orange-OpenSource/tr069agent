@@ -8,10 +8,10 @@
  * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
- * File        : DM_stun.h
+ * File        : dm_upnpigd.c
  *
- * Created     : 18/04/2017
- * Author      :
+ * Created     : 30/05/2017
+ * Author      : Ying ZENG
  *
  *---------------------------------------------------------------------------
  * $Id$
@@ -45,8 +45,8 @@
 #include "upnpcommands.h"
 #include "upnperrors.h"
 #include "miniupnpcstrings.h"
-
 #endif
+
 #ifndef DM_IGD_H
 
 #define DM_IGD_H

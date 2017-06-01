@@ -29,8 +29,8 @@ DeviceInfo.SpecVersion;STRING;1;0;0;0;1;0;;1.1;0;0
 ManagementServer.;ANY;0;0;0;0;0;0;;;0;0
 
 #ManagementServer.URL;STRING;0;1;1;2;0;0;;http://g-acsdev.rd.francetelecom.fr:8080/nbbsora/tr69;0;0
-#ManagementServer.URL;STRING;0;1;1;2;0;0;;http://g-acsrd.orange-labs.fr:8080/edge/tr69;0;0
-ManagementServer.URL;STRING;0;1;1;2;0;0;;http://tink-device.kmt.orange.com/CWMPInterface/proxyServlet/;0;0
+ManagementServer.URL;STRING;0;1;1;2;0;0;;http://g-acsrd.orange-labs.fr:8080/edge/tr69;0;0
+#ManagementServer.URL;STRING;0;1;1;2;0;0;;http://tink-device.kmt.orange.com/CWMPInterface/proxyServlet/;0;0
 #ManagementServer.URL;STRING;0;1;1;2;0;0;;http://tink-device.kermit.itn.intraorange/CWMPInterface/proxyServlet/;0;0
 
 ManagementServer.Username;STRING;0;1;1;2;0;0;;;0;0
