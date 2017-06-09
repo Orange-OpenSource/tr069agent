@@ -405,7 +405,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       			// 2 valid IGD found but not connected, 3 UPnP device found but not recognized as IGD
       			int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
       			if (state == 1) {
-      				DBG("local LAN IP Address is %s\n", lanaddr);
+      				//DBG("local LAN IP Address is %s\n", lanaddr);
 
       				int ext = UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, extIpAddr);
       				if (ext == 0){

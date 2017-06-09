@@ -400,7 +400,7 @@ main(int  argc,
 		// ---------------------------------------------------------------------------------------
 		DBG("Start DM_ENG_Device_init - Begin");
 		DM_ENG_Device_init();
-      DBG("Start DM_ENG_Device_init - End");
+    DBG("Start DM_ENG_Device_init - End");
 
 		// ---------------------------------------------------------------------------------------
 		// The agent will be able to start itself

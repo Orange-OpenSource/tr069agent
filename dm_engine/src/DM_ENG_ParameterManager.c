@@ -5,7 +5,7 @@
  *
  * This software is distributed under the terms and conditions of the 'Apache-2.0'
  * license which can be found in the file 'LICENSE.txt' in this package distribution
- * or at 'http://www.apache.org/licenses/LICENSE-2.0'. 
+ * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
  * File        : DM_ENG_ParameterManager.c
@@ -61,7 +61,7 @@ static bool acsParametersToUpdate = false;
 
 static DM_ENG_ParameterValueStruct* diagnosticsRequested = NULL;
 
-// File d'attente des notifications système
+// File d'attente des notifications systï¿½me
 static DM_ENG_SystemNotificationStruct* pendingChanges = NULL;
 
 static char* _getValue(char* prmName, const char* destName);
@@ -71,7 +71,7 @@ static int _loadComputedParameter(DM_ENG_Parameter* param, bool checkChange);
 
 /**
  * Initializes the DM Engine.
- * 
+ *
  * @param dataPath Path to find the necessary data in working of the engine
  * @param level Indicates if the data must be resetted, if the BOOT event must be sent etc
  *
@@ -88,7 +88,7 @@ int DM_ENG_ParameterManager_init(const char* dataPath, DM_ENG_InitLevel level)
          DM_ENG_Parameter* param;
          for (param = DM_ENG_ParameterData_getFirst(); param!=NULL; param = DM_ENG_ParameterData_getNext())
          {
-            // remise à zéro pour forcer réinitialisation système au démarrage
+            // remise ï¿½ zï¿½ro pour forcer rï¿½initialisation systï¿½me au dï¿½marrage
             if ((param->storageMode != DM_ENG_StorageMode_DM_ONLY) && (param->value != NULL))
             {
                free(param->value);
@@ -120,7 +120,7 @@ int DM_ENG_ParameterManager_init(const char* dataPath, DM_ENG_InitLevel level)
    DM_ENG_InformMessageScheduler_init(level);
    if (level == DM_ENG_InitLevel_FACTORY_RESET)
    {
-      DM_ENG_deleteAllSystemNotificationStruct(&pendingChanges); // au cas où il resterait des notif en attente
+      DM_ENG_deleteAllSystemNotificationStruct(&pendingChanges); // au cas oï¿½ il resterait des notif en attente
    }
    if (DM_ENG_ParameterData_getPeriodicInformTime() == 0)
    {
@@ -211,7 +211,7 @@ static int _actionAfterDownload(const char* fileType, const char* fileName)
    if ((fileType != NULL) && (strcmp(fileType, DATA_MODEL_EXTENSION_FILE_TYPE) == 0))
    {
       res = DM_ENG_DataModelConfiguration_processConfig(fileName);
-      if (res == 0) // on redémarre le module de stats
+      if (res == 0) // on redï¿½marre le module de stats
       {
          DM_ENG_StatisticsModule_restart();
       }
@@ -239,7 +239,7 @@ static int _applyTransferRequest(DM_ENG_TransferRequest* tr)
 }
 
 /*
- * on déplace tous les événements en attente vers events
+ * on dï¿½place tous les ï¿½vï¿½nements en attente vers events
  */
 void DM_ENG_ParameterManager_manageEvents(DM_ENG_EventStruct* pendingEvt)
 {
@@ -254,7 +254,7 @@ void DM_ENG_ParameterManager_manageEvents(DM_ENG_EventStruct* pendingEvt)
    time_t now = time(NULL);
    if ((periodicInformTime != 0) && (periodicInformTime <= now))
    {
-      if (!DM_ENG_ParameterData_isInEvents(DM_ENG_EVENT_PERIODIC)) // EVENT_PERIODIC n'est pas présent, on le rajoute
+      if (!DM_ENG_ParameterData_isInEvents(DM_ENG_EVENT_PERIODIC)) // EVENT_PERIODIC n'est pas prï¿½sent, on le rajoute
       {
          DM_ENG_ParameterData_addEvent(DM_ENG_EVENT_PERIODIC, NULL);
       }
@@ -305,28 +305,28 @@ void DM_ENG_ParameterManager_manageEvents(DM_ENG_EventStruct* pendingEvt)
 }
 
 /*
- * Met à jour la liste des événements en rajoutant ou supprimant au besoin le VALUE_CHANGE_EVENT
- * @param valueChanged Indique si VALUE_CHANGE_EVENT doit être présent
+ * Met ï¿½ jour la liste des ï¿½vï¿½nements en rajoutant ou supprimant au besoin le VALUE_CHANGE_EVENT
+ * @param valueChanged Indique si VALUE_CHANGE_EVENT doit ï¿½tre prï¿½sent
  */
 void DM_ENG_ParameterManager_updateValueChangeEvent(bool valueChanged)
 {
    if (DM_ENG_ParameterData_isInEvents(DM_ENG_EVENT_VALUE_CHANGE))
    {
       if (!valueChanged)
-      // La notification de ce changement a déjà été faite ds un autre Inform Message (Inform Message périodique)
+      // La notification de ce changement a dï¿½jï¿½ ï¿½tï¿½ faite ds un autre Inform Message (Inform Message pï¿½riodique)
       {
          DM_ENG_ParameterData_deleteEvent(DM_ENG_EVENT_VALUE_CHANGE);
       }
    }
    else if (valueChanged)
-      // au moins une valeur changée mais events ne contient pas VALUE_CHANGE_EVENT => on le rajoute
+      // au moins une valeur changï¿½e mais events ne contient pas VALUE_CHANGE_EVENT => on le rajoute
    {
       DM_ENG_ParameterData_addEvent(DM_ENG_EVENT_VALUE_CHANGE, NULL);
    }
 }
 
 /*
- * Complète la liste des événements avec les "M Download" correspondants aux résultats de transfert
+ * Complï¿½te la liste des ï¿½vï¿½nements avec les "M Download" correspondants aux rï¿½sultats de transfert
  */
 void DM_ENG_ParameterManager_addMTransferEvents()
 {
@@ -342,7 +342,7 @@ void DM_ENG_ParameterManager_addMTransferEvents()
 }
 
 /*
- * Supprime tous les événements "M Download" de la liste events
+ * Supprime tous les ï¿½vï¿½nements "M Download" de la liste events
  */
 void DM_ENG_ParameterManager_deleteMTransferEvents()
 {
@@ -351,7 +351,7 @@ void DM_ENG_ParameterManager_deleteMTransferEvents()
 }
 
 /*
- * Teste si la liste des événements est vide
+ * Teste si la liste des ï¿½vï¿½nements est vide
  */
 bool DM_ENG_ParameterManager_isEventsEmpty()
 {
@@ -359,8 +359,8 @@ bool DM_ENG_ParameterManager_isEventsEmpty()
 }
 
 /*
- * Fournit un EventStruct*[] nouvellement créé.
- * L'appelant a la charge d'effectuer un free du tableau après utilisation.
+ * Fournit un EventStruct*[] nouvellement crï¿½ï¿½.
+ * L'appelant a la charge d'effectuer un free du tableau aprï¿½s utilisation.
  */
 DM_ENG_EventStruct** DM_ENG_ParameterManager_getEventsTab()
 {
@@ -379,7 +379,7 @@ DM_ENG_EventStruct** DM_ENG_ParameterManager_getEventsTab()
 }
 
 /*
- * Vide les events (appelé une fois que la transmission à l'ACS a été confirmé)
+ * Vide les events (appelï¿½ une fois que la transmission ï¿½ l'ACS a ï¿½tï¿½ confirmï¿½)
  */
 void DM_ENG_ParameterManager_clearEvents()
 {
@@ -387,7 +387,7 @@ void DM_ENG_ParameterManager_clearEvents()
    {
       DM_ENG_ParameterData_deleteAllEvents();
 
-      // on supprime également les flags associés à l'événement VALUE CHANGE
+      // on supprime ï¿½galement les flags associï¿½s ï¿½ l'ï¿½vï¿½nement VALUE CHANGE
       DM_ENG_Parameter* param;
       for (param = DM_ENG_ParameterData_getFirst(); param!=NULL; param = DM_ENG_ParameterData_getNext())
       {
@@ -482,7 +482,7 @@ static char* _getValue(char* prmName, const char* destName)
       if ((prm->storageMode == DM_ENG_StorageMode_DM_ONLY) && DM_ENG_Parameter_isValuable(longName))
       {
          if ((prm->type == DM_ENG_ParameterType_BOOLEAN) && ((prm->value == NULL) || (*prm->value == '\0')))
-         // chaîne NULL ou vide considérée comme false
+         // chaï¿½ne NULL ou vide considï¿½rï¿½e comme false
          {
             DM_ENG_Parameter_updateValue(prm, (char*)DM_ENG_FALSE_STRING, false);
          }
@@ -530,7 +530,7 @@ static void _relocateInstances(char* objName, unsigned int instanceNb)
                   DM_ENG_Parameter_setDataChanged(true);
                }
             }
-            else if ((strncmp(param->definition, shortObjName, objLen) == 0) && (param->definition[objLen]=='.')) // ne pas modifier que le nom du début !!
+            else if ((strncmp(param->definition, shortObjName, objLen) == 0) && (param->definition[objLen]=='.')) // ne pas modifier que le nom du dï¿½but !!
             {
                char* newExp = (char*)calloc(strlen(param->definition)+numLen+1, sizeof(char));
                sprintf(newExp, "%s%s", instanceName, param->definition+objLen+1);
@@ -545,7 +545,7 @@ static void _relocateInstances(char* objName, unsigned int instanceNb)
 }
 
 /*
- * Récupère le param en base après avoir créé de nouvelles instances si nécessaire
+ * Rï¿½cupï¿½re le param en base aprï¿½s avoir crï¿½ï¿½ de nouvelles instances si nï¿½cessaire
  */
 static DM_ENG_Parameter* _getParameter(const char* paramName)
 {
@@ -553,30 +553,30 @@ static DM_ENG_Parameter* _getParameter(const char* paramName)
 
    int nbIter;
    char* proto = NULL;
-   for (nbIter=0; nbIter<5; nbIter++) // 5 itérations max pour éviter les boucles infinies (normalement impossibles)
+   for (nbIter=0; nbIter<5; nbIter++) // 5 itï¿½rations max pour ï¿½viter les boucles infinies (normalement impossibles)
    {
       res = DM_ENG_ParameterData_getParameter(paramName);
-      if (res != NULL) return res; // pas de pb, on a trouvé le paramètre en base ; sinon des instances sont à ajouter
+      if (res != NULL) return res; // pas de pb, on a trouvï¿½ le paramï¿½tre en base ; sinon des instances sont ï¿½ ajouter
 
-      // on recherche le proto à instancier en supprimant itérativement les n° d'instance de droite à gauche
-      // Ex : aa.bb.3.cc.4.dd.2.ee pourra être instancié à partir de aa.bb.3.cc..dd..ee -> instance n°4 de aa.bb.3.cc.
-      // puis récursivement, à partir de aa.bb.3.cc.4.dd..ee -> instance n° 2 de aa.bb.3.cc.4.dd.
+      // on recherche le proto ï¿½ instancier en supprimant itï¿½rativement les nï¿½ d'instance de droite ï¿½ gauche
+      // Ex : aa.bb.3.cc.4.dd.2.ee pourra ï¿½tre instanciï¿½ ï¿½ partir de aa.bb.3.cc..dd..ee -> instance nï¿½4 de aa.bb.3.cc.
+      // puis rï¿½cursivement, ï¿½ partir de aa.bb.3.cc.4.dd..ee -> instance nï¿½ 2 de aa.bb.3.cc.4.dd.
       proto = strdup(paramName);
       unsigned int instanceNb;
       int k = strlen(proto)-1;
       do
       {
-         while ((k>0) && (proto[k] != '.')) { k--; } // on cherche le '.' le plus à droite
-         if (k<=1) goto fin; // pas trouvé
+         while ((k>0) && (proto[k] != '.')) { k--; } // on cherche le '.' le plus ï¿½ droite
+         if (k<=1) goto fin; // pas trouvï¿½
          int i = k-1;
          while ((i>0) && (proto[i] >= '0') && (proto[i] <= '9')) { i--; } // on remonte tous les chiffres
-         if (i<=0) goto fin; // pas trouvé
-         if (proto[i] != '.') { k = i-1; continue /*do while*/; } // ce n'est pas une partie chiffrée
-         if (k-i==1) goto fin; // nom incorrect ("..") -> pas trouvé
+         if (i<=0) goto fin; // pas trouvï¿½
+         if (proto[i] != '.') { k = i-1; continue /*do while*/; } // ce n'est pas une partie chiffrï¿½e
+         if (k-i==1) goto fin; // nom incorrect ("..") -> pas trouvï¿½
          proto[k] = '\0';
-         if (!DM_ENG_stringToUint(proto+i+1, &instanceNb)) goto fin; // valeur incorrecte -> pas trouvé
+         if (!DM_ENG_stringToUint(proto+i+1, &instanceNb)) goto fin; // valeur incorrecte -> pas trouvï¿½
          proto[k] = '.';
-         if (proto[k+1] == '\0') // queue de chaîne vide -> ne pas terminer par ".."
+         if (proto[k+1] == '\0') // queue de chaï¿½ne vide -> ne pas terminer par ".."
          {
             proto[i+1] = '\0';
          }
@@ -588,12 +588,12 @@ static DM_ENG_Parameter* _getParameter(const char* paramName)
                proto[j+1] = proto[j+k-i];
             }
          }
-         if (DM_ENG_ParameterData_getParameter(proto) != NULL) // eureka ! le proto est défini
+         if (DM_ENG_ParameterData_getParameter(proto) != NULL) // eureka ! le proto est dï¿½fini
          {
-            proto[i+1] = '\0'; // proto fournit l'objet à instancier
+            proto[i+1] = '\0'; // proto fournit l'objet ï¿½ instancier
             break /*do while*/;
          }
-         k = i-1; // on passe le '.' en i car on n'a jamais 2 parties chiffrées consécutives
+         k = i-1; // on passe le '.' en i car on n'a jamais 2 parties chiffrï¿½es consï¿½cutives
       }
       while (true);
 
@@ -602,7 +602,7 @@ static DM_ENG_Parameter* _getParameter(const char* paramName)
       DM_ENG_ParameterData_createInstance(param, instanceNb);
       _relocateInstances(proto, instanceNb);
       DM_ENG_FREE(proto);
-      // puis on retente récursivement. On aura autant d'itérations que de niveaux d'instanciation nécessaires
+      // puis on retente rï¿½cursivement. On aura autant d'itï¿½rations que de niveaux d'instanciation nï¿½cessaires
    }
 
    if (nbIter >= 5)
@@ -615,8 +615,8 @@ fin :
    return res;
 }
 
-// Marque les sous-param de name référencés dans names
-// Supprime les sous-param de name non référencés dans names (non remontées par Device_getObject() ou Device_getNames())
+// Marque les sous-param de name rï¿½fï¿½rencï¿½s dans names
+// Supprime les sous-param de name non rï¿½fï¿½rencï¿½s dans names (non remontï¿½es par Device_getObject() ou Device_getNames())
 static void _markInstancesLoaded(const char* name, char* names[], bool withValues)
 {
    int len = strlen(name);
@@ -642,8 +642,8 @@ debut:
          }
          else if (DM_ENG_Parameter_isNodeInstance(prmName))
          {
-            // si c'est un objet de type instance qui n'a pas été trouvé, on peut le supprimer
-            // (Les paramètres fixes du data model même s'ils ne sont pas remontés ne sont pas supprimés)
+            // si c'est un objet de type instance qui n'a pas ï¿½tï¿½ trouvï¿½, on peut le supprimer
+            // (Les paramï¿½tres fixes du data model mï¿½me s'ils ne sont pas remontï¿½s ne sont pas supprimï¿½s)
             aSupprimer = strdup(prmName);
             break;
          }
@@ -653,13 +653,13 @@ debut:
    {
       DM_ENG_ParameterData_deleteObject(aSupprimer);
       DM_ENG_FREE(aSupprimer);
-      goto debut; // dans le cas où il y a eu un objet supprimé, on recommence
+      goto debut; // dans le cas oï¿½ il y a eu un objet supprimï¿½, on recommence
    }
 }
 
 static void _updateSystemValue(DM_ENG_Parameter* param, char* value, bool newValue)
 {
-   DM_ENG_Parameter_updateValue(param, (value == NULL ? (char*)DM_ENG_EMPTY : value), newValue); // NULL interptété comme EMPTY
+   DM_ENG_Parameter_updateValue(param, (value == NULL ? (char*)DM_ENG_EMPTY : value), newValue); // NULL interptï¿½tï¿½ comme EMPTY
 }
 
 /**
@@ -696,10 +696,10 @@ static void _updateObject(const char* objName, DM_ENG_ParameterValueStruct* para
    free(paramNames);
 }
 
-// Retourne 0 si OK, 1 si aucun changement n'est apporté au data model et 900X en cas d'erreur
+// Retourne 0 si OK, 1 si aucun changement n'est apportï¿½ au data model et 900X en cas d'erreur
 static int _loadNames(const char* name, const char* data)
 {
-   // On charge de le data model instancié depuis le système et on met à jour les données de DM
+   // On charge de le data model instanciï¿½ depuis le systï¿½me et on met ï¿½ jour les donnï¿½es de DM
    char** paramNames = NULL;
    int res = DM_ENG_Device_getNames(name, data, &paramNames);
    if ((res == 0) && (paramNames != NULL))
@@ -726,13 +726,13 @@ static int _loadNames(const char* name, const char* data)
    return res;
 }
 
-// effectue la mise à jour du paramètre système fourni, noeud ou feuille
+// effectue la mise ï¿½ jour du paramï¿½tre systï¿½me fourni, noeud ou feuille
 static int _loadFinal(DM_ENG_Parameter* param, bool withValues)
 {
    int res = 0;
    char* name = strdup(param->name);
-   if (!DM_ENG_Parameter_isLoaded(param, withValues) // sinon rien à faire
-    && (strstr(name, "..") == 0)) // param n'est pas un proto (sinon rien à faire)
+   if (!DM_ENG_Parameter_isLoaded(param, withValues) // sinon rien ï¿½ faire
+    && (strstr(name, "..") == 0)) // param n'est pas un proto (sinon rien ï¿½ faire)
    {
       bool isNode = (name[strlen(name)-1] == '.');
       res = 1;
@@ -740,7 +740,7 @@ static int _loadFinal(DM_ENG_Parameter* param, bool withValues)
       {
          if (isNode)
          {
-            // On charge de le data model instancié depuis le système et on met à jour les données de DM
+            // On charge de le data model instanciï¿½ depuis le systï¿½me et on met ï¿½ jour les donnï¿½es de DM
             DM_ENG_ParameterValueStruct** paramVal;
             char* data = NULL;
             if ((param->definition != NULL) && (strlen(param->definition) != 0))
@@ -761,7 +761,7 @@ static int _loadFinal(DM_ENG_Parameter* param, bool withValues)
             res = DM_ENG_ParameterManager_loadLeafParameterValue(param, false);
          }
       }
-      else if (isNode && ((param->loadingMode & 2)==2)) // si mode&2 == 0, il n'y a pas d'instanciation donc l'arborescence ne peut être modifiée
+      else if (isNode && ((param->loadingMode & 2)==2)) // si mode&2 == 0, il n'y a pas d'instanciation donc l'arborescence ne peut ï¿½tre modifiï¿½e
       {
          char* data = NULL;
          if ((param->definition != NULL) && (strlen(param->definition) != 0))
@@ -772,9 +772,9 @@ static int _loadFinal(DM_ENG_Parameter* param, bool withValues)
          DM_ENG_FREE(data);
       }
 
-      if ((res == 0) || (res == 1)) // cas 1 : le data model est resté inchangé toutefois on marque le param comme étant à jour
+      if ((res == 0) || (res == 1)) // cas 1 : le data model est restï¿½ inchangï¿½ toutefois on marque le param comme ï¿½tant ï¿½ jour
       {
-         param = DM_ENG_ParameterData_getParameter(name); // on récharge le param car les load ont pu modifier le pointeur
+         param = DM_ENG_ParameterData_getParameter(name); // on rï¿½charge le param car les load ont pu modifier le pointeur
          if (param != NULL)
          {
             DM_ENG_Parameter_markLoaded(param, withValues);
@@ -807,13 +807,13 @@ debut:
             DM_ENG_Parameter* param = DM_ENG_ParameterManager_getCurrentParameter();
             if (DM_ENG_Parameter_isDiagnosticsState(prmName) ? !requested : !param->writable)
             {
-               // on réinitialise les param R/O + éventuellement DiagnosticsState à "None"
+               // on rï¿½initialise les param R/O + ï¿½ventuellement DiagnosticsState ï¿½ "None"
                DM_ENG_Parameter_resetValue(param);
             }
          }
          else if (DM_ENG_Parameter_isNodeInstance(prmName))
          {
-            // Les objets de type instance doivent être supprimés
+            // Les objets de type instance doivent ï¿½tre supprimï¿½s
             aSupprimer = strdup(prmName);
             break;
          }
@@ -823,7 +823,7 @@ debut:
    {
       DM_ENG_ParameterData_deleteObject(aSupprimer);
       DM_ENG_FREE(aSupprimer);
-      goto debut; // dans le cas où il y a eu un objet supprimé, on recommence
+      goto debut; // dans le cas oï¿½ il y a eu un objet supprimï¿½, on recommence
    }
 }
 
@@ -845,7 +845,7 @@ static char* _computeNumberOfIntances(char* objName)
    return DM_ENG_intToString(nbOf);
 }
 
-// le param fourni doit être COMPUTED
+// le param fourni doit ï¿½tre COMPUTED
 static int _loadComputedParameter(DM_ENG_Parameter* param, bool checkChange)
 {
    if (DM_ENG_Parameter_isBeingEvaluated(param)) return DM_ENG_INTERNAL_ERROR; // le data model comporte une boucle
@@ -856,15 +856,15 @@ static int _loadComputedParameter(DM_ENG_Parameter* param, bool checkChange)
    char* prmVal = NULL;
    if (param->definition!=NULL)
    {
-      DM_ENG_Parameter_markBeingEvaluated(param); // pour éviter les boucles infinies
+      DM_ENG_Parameter_markBeingEvaluated(param); // pour ï¿½viter les boucles infinies
 
-      if (*param->definition == '#') // compteur d'éléments, pas besoin des valeurs
+      if (*param->definition == '#') // compteur d'ï¿½lï¿½ments, pas besoin des valeurs
       {
          char* longName = DM_ENG_Parameter_getLongName(param->definition+1, prmName);
          prmVal = _computeNumberOfIntances(longName);
          free(longName);
       }
-      else // expression computed à calculer
+      else // expression computed ï¿½ calculer
       {
          bRes = DM_ENG_ComputedExp_eval(param->definition, _getValue, prmName, &prmVal);
       }
@@ -874,7 +874,7 @@ static int _loadComputedParameter(DM_ENG_Parameter* param, bool checkChange)
    }
    if (bRes && (prmVal != NULL) && ((oldValue == NULL) || (strcmp(prmVal, oldValue) != 0))) // prmVal == NULL signifierait : pas de (nouvelle) valeur
    {
-      _updateSystemValue(param, prmVal, checkChange); // si checkChange == false, le flag VALUE CHANGE n'est pas modifié (s'il était true, il le reste)
+      _updateSystemValue(param, prmVal, checkChange); // si checkChange == false, le flag VALUE CHANGE n'est pas modifiï¿½ (s'il ï¿½tait true, il le reste)
    }
    DM_ENG_Parameter_markLoaded(param, true);
    DM_ENG_FREE(prmName);
@@ -883,7 +883,7 @@ static int _loadComputedParameter(DM_ENG_Parameter* param, bool checkChange)
    return (bRes ? 0 : 1);
 }
 
-// le param fourni doit être COMPUTED
+// le param fourni doit ï¿½tre COMPUTED
 static bool _isValueChanged(char* shortname, const char* destName, bool* pPushed)
 {
    bool changed = false;
@@ -898,7 +898,7 @@ static bool _isValueChanged(char* shortname, const char* destName, bool* pPushed
    return changed;
 }
 
-// le param fourni doit être COMPUTED
+// le param fourni doit ï¿½tre COMPUTED
 static void _checkComputedChanged(DM_ENG_Parameter* param)
 {
    bool changed = false;
@@ -907,11 +907,11 @@ static void _checkComputedChanged(DM_ENG_Parameter* param)
    char* bVal = NULL;
    if (param->definition!=NULL)
    {
-      if (*param->definition == '#') // compteur d'éléments, pas besoin des valeurs
+      if (*param->definition == '#') // compteur d'ï¿½lï¿½ments, pas besoin des valeurs
       {
          changed = _isValueChanged(param->definition+1, prmName, &pushed);
       }
-      else // expression computed à calculer
+      else // expression computed ï¿½ calculer
       {
          DM_ENG_ComputedExp_isChanged(param->definition, _isValueChanged, _getValue, prmName, &changed, &pushed);
       }
@@ -920,9 +920,9 @@ static void _checkComputedChanged(DM_ENG_Parameter* param)
    {
       param = DM_ENG_ParameterData_getParameter(prmName); // on recharge param
       if ((param->value != NULL) || (param->notification == DM_ENG_NotificationMode_PASSIVE) || (param->notification == DM_ENG_NotificationMode_ACTIVE))
-        // on calcule la nouvelle valeur et on confirme ou non qu'elle a bien changé
+        // on calcule la nouvelle valeur et on confirme ou non qu'elle a bien changï¿½
       {
-         _loadComputedParameter(param, true); // positionnera VALUE_CHANGED si la valeur a bien changé
+         _loadComputedParameter(param, true); // positionnera VALUE_CHANGED si la valeur a bien changï¿½
       }
       else
       {
@@ -945,7 +945,7 @@ static bool _createParameter(char* newName, char* destName, DM_ENG_ParameterType
    DM_ENG_Parameter* prm = DM_ENG_ParameterData_getParameter(longName);
    if (prm == NULL)
    {
-      prm = DM_ENG_newDefinedParameter(longName, type, args, true); // paramètre interne (= hidden)
+      prm = DM_ENG_newDefinedParameter(longName, type, args, true); // paramï¿½tre interne (= hidden)
       if (configKey != NULL) { prm->configKey = strdup(configKey); }
       DM_ENG_ParameterData_addParameter(prm);
       DM_ENG_ParameterData_sync();
@@ -989,7 +989,7 @@ static int _loadSystemParameter(DM_ENG_Parameter* param, char** pData)
    return res;
 }
 
-// parcourt la liste des "sous-paramètres" pour effectuer les mises à jour des paramètres système
+// parcourt la liste des "sous-paramï¿½tres" pour effectuer les mises ï¿½ jour des paramï¿½tres systï¿½me
 // si param == NULL, on parcourt tout le data model
 static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
 {
@@ -1000,9 +1000,9 @@ static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
       {
          res = _loadFinal(param, withValues);
       }
-      else // itérer pour trouver un élément à mettre à jour
+      else // itï¿½rer pour trouver un ï¿½lï¿½ment ï¿½ mettre ï¿½ jour
       {
-         if (param != NULL) { DM_ENG_Parameter_markLoaded(param, withValues); } // on marque le noeud comme updated pour éviter de recommencer cette recherche par la suite
+         if (param != NULL) { DM_ENG_Parameter_markLoaded(param, withValues); } // on marque le noeud comme updated pour ï¿½viter de recommencer cette recherche par la suite
          char* name = strdup(param==NULL ? "" : param->name);
          int len = strlen(name);
          int count = 0;
@@ -1010,26 +1010,26 @@ static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
          do
          {
             char* foundName = NULL;
-            char* foundComputedName = NULL; // sert à prioriser les mises à jour de non computed
+            char* foundComputedName = NULL; // sert ï¿½ prioriser les mises ï¿½ jour de non computed
             char* prmName;
             for (prmName = DM_ENG_ParameterData_getFirstName(); prmName!=NULL; prmName = DM_ENG_ParameterData_getNextName())
             {
-               if (((len==0) || (((int)strlen(prmName)>len) && (strncmp(prmName, name, len)==0))) // filtre les sous-paramètres de param
+               if (((len==0) || (((int)strlen(prmName)>len) && (strncmp(prmName, name, len)==0))) // filtre les sous-paramï¿½tres de param
                  && (strstr(prmName, "..") == 0) // on passe les protos
-                 && ((foundName == NULL) || ((strlen(prmName)<strlen(foundName)) && (strncmp(prmName, foundName, strlen(prmName))==0)))) // permet de converger vers l'objet racine du groupe qui n'est pas nécessaire parcouru en 1er dans l'itération
+                 && ((foundName == NULL) || ((strlen(prmName)<strlen(foundName)) && (strncmp(prmName, foundName, strlen(prmName))==0)))) // permet de converger vers l'objet racine du groupe qui n'est pas nï¿½cessaire parcouru en 1er dans l'itï¿½ration
                {
                   DM_ENG_Parameter* current = DM_ENG_ParameterData_getCurrent();
                   if ((((current->loadingMode & 1) != 0) || (prmName[strlen(prmName)-1] != '.'))
                    && !DM_ENG_Parameter_isLoaded(current, withValues)
                    && (strstr(prmName, "..")==0))
                   {
-///// solution non optimisée /////
+///// solution non optimisï¿½e /////
 //                     DM_ENG_FREE(foundName);
 //                     foundName = strdup(prmName);
-///// solution optimisée pour réduire le nb de parcours complets du data model  /////
+///// solution optimisï¿½e pour rï¿½duire le nb de parcours complets du data model  /////
                      if (((current->loadingMode & 1) == 0) && (current->storageMode != DM_ENG_StorageMode_COMPUTED))
-                     {                           // c'est nécessairement une feuille : la valeur peut être obtenue isolément,
-                                                 // on le fait en cours d'itération pour une meilleure efficacité
+                     {                           // c'est nï¿½cessairement une feuille : la valeur peut ï¿½tre obtenue isolï¿½ment,
+                                                 // on le fait en cours d'itï¿½ration pour une meilleure efficacitï¿½
                         res = _loadSystemParameter(current, NULL);
                         if (res != 0)
                         {
@@ -1062,7 +1062,7 @@ static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
                res = _loadFinal(foundParam, withValues);
                free(foundName);
             }
-            if (count++ > _MAX_SYSTEM_ENTRY) // pour détecter les boucles infinies
+            if (count++ > _MAX_SYSTEM_ENTRY) // pour dï¿½tecter les boucles infinies
             {
                res = DM_ENG_INTERNAL_ERROR;
                EXEC_ERROR("Infinite loop in updating parameter values\n");
@@ -1080,8 +1080,8 @@ static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
 }
 
 /*
- * cherche le proto le plus profond (on cherche un n° d'instance de droite à gauche) dont name serait une instance
- * retourne -1 si pas de proto, sinon l'index de la sous-chaîne ".."
+ * cherche le proto le plus profond (on cherche un nï¿½ d'instance de droite ï¿½ gauche) dont name serait une instance
+ * retourne -1 si pas de proto, sinon l'index de la sous-chaï¿½ne ".."
  */
 static int _computeProto(char* name)
 {
@@ -1104,7 +1104,7 @@ static int _computeProto(char* name)
             {
                k=i;
             }
-            else // on a trouvé un noeud chiffré : condition 0 <= i < k-1 && name[i]=='.' && name[k]=='.' && chiffres entre les 2
+            else // on a trouvï¿½ un noeud chiffrï¿½ : condition 0 <= i < k-1 && name[i]=='.' && name[k]=='.' && chiffres entre les 2
             {
                int j;
                for (j=i; name[j]!='\0'; j++)
@@ -1167,9 +1167,9 @@ int DM_ENG_ParameterManager_loadLeafParameterValue(DM_ENG_Parameter* param, bool
 int DM_ENG_ParameterManager_loadSystemParameter(DM_ENG_Parameter* param, bool withValues)
 {
    int res = 0;
-   if (DM_ENG_Parameter_isLoaded(param, withValues)) return 0; // données déjà à jour, pas la peine de continuer
+   if (DM_ENG_Parameter_isLoaded(param, withValues)) return 0; // donnï¿½es dï¿½jï¿½ ï¿½ jour, pas la peine de continuer
 
-   // cas des données groupées : on cherche l'objet racine du groupe
+   // cas des donnï¿½es groupï¿½es : on cherche l'objet racine du groupe
    if ((param->loadingMode & 1) != 0)
    {
       DM_ENG_Parameter* parent = param;
@@ -1183,7 +1183,7 @@ int DM_ENG_ParameterManager_loadSystemParameter(DM_ENG_Parameter* param, bool wi
             len--;
          }
          while ((len > 0) && ((parentName[len] != '.') || (parentName[len-1] == '.')));
-         if (len <= 0) break; // sortie normalement irréalisable
+         if (len <= 0) break; // sortie normalement irrï¿½alisable
          parentName[len+1] = '\0';
          parent = DM_ENG_ParameterData_getParameter(parentName);
       }
@@ -1218,12 +1218,12 @@ int DM_ENG_ParameterManager_loadSystemParameters(const char* name, bool withValu
    DM_ENG_Parameter* param = DM_ENG_ParameterData_getParameter(name);
    if (param == NULL)
    {
-      // Le paramètre n'est pas stocké dans la base mais ce peut être une instance système.
-      // On cherche donc un prototype dont ce pourrait être une instance.
+      // Le paramï¿½tre n'est pas stockï¿½ dans la base mais ce peut ï¿½tre une instance systï¿½me.
+      // On cherche donc un prototype dont ce pourrait ï¿½tre une instance.
       char* proto = strdup(name);
       do
       {
-         int i = _computeProto(proto); // i index de la 1ère sous-chaîne ".." du proto obtenu
+         int i = _computeProto(proto); // i index de la 1ï¿½re sous-chaï¿½ne ".." du proto obtenu
          if (i<=0) break;
          param = DM_ENG_ParameterData_getParameter(proto);
       }
@@ -1232,7 +1232,7 @@ int DM_ENG_ParameterManager_loadSystemParameters(const char* name, bool withValu
       if (param == NULL)
       {
          DBG("No parameter found.");
-         return DM_ENG_INVALID_PARAMETER_NAME; // nom invalide : aucun paramètre, objet ou proto avec ce nom
+         return DM_ENG_INVALID_PARAMETER_NAME; // nom invalide : aucun paramï¿½tre, objet ou proto avec ce nom
       }
    }
 
@@ -1268,7 +1268,7 @@ int DM_ENG_ParameterManager_getParameterValue(const char* name, OUT char** pValu
 static int _setParameterValue(DM_ENG_Parameter* param, char* value, char** pData)
 {
    int res = DM_ENG_Parameter_checkBeforeSetValue(param, value);
-   if (res == 0) { res = _loadSystemParameter(param, pData); } // charger la valeur précédente pour être capable de la restituer en cas d'erreur
+   if (res == 0) { res = _loadSystemParameter(param, pData); } // charger la valeur prï¿½cï¿½dente pour ï¿½tre capable de la restituer en cas d'erreur
    if (res == 0) { res = DM_ENG_Parameter_setValue(param, value); }
    return res;
 }
@@ -1291,8 +1291,8 @@ int DM_ENG_ParameterManager_setParameterValue(DM_ENG_EntityType entity, const ch
    DM_ENG_Parameter* param = DM_ENG_ParameterData_getParameter(name);
 
    if ((param == NULL) || DM_ENG_Parameter_isNode(param->name)
-     || ((*pResult == DM_ENG_ParameterStatus_UNDEFINED) // vérification uniquement pour le 1er appel (non récursif)
-          && DM_ENG_Parameter_isHidden(param) && (entity != DM_ENG_EntityType_SYSTEM))) // paramètre caché, c'est comme s'il n'existait pas
+     || ((*pResult == DM_ENG_ParameterStatus_UNDEFINED) // vï¿½rification uniquement pour le 1er appel (non rï¿½cursif)
+          && DM_ENG_Parameter_isHidden(param) && (entity != DM_ENG_EntityType_SYSTEM))) // paramï¿½tre cachï¿½, c'est comme s'il n'existait pas
    {
      DBG("DM_ENG_INVALID_PARAMETER_NAME");
      return DM_ENG_INVALID_PARAMETER_NAME;
@@ -1314,7 +1314,7 @@ int DM_ENG_ParameterManager_setParameterValue(DM_ENG_EntityType entity, const ch
         // return DM_ENG_INVALID_PARAMETER_TYPE; DO NOT RETURN
       }
 
-      if (DM_ENG_Parameter_isBeingEvaluated(param)) // Pour éviter les boucles infinies
+      if (DM_ENG_Parameter_isBeingEvaluated(param)) // Pour ï¿½viter les boucles infinies
       {
          res = DM_ENG_INTERNAL_ERROR;
       }
@@ -1322,7 +1322,7 @@ int DM_ENG_ParameterManager_setParameterValue(DM_ENG_EntityType entity, const ch
       {
          DM_ENG_Parameter_markBeingEvaluated(param);
 
-         char* nextName = NULL; // nom pour set récursif dans le cas des redirections
+         char* nextName = NULL; // nom pour set rï¿½cursif dans le cas des redirections
          if ((param->storageMode == DM_ENG_StorageMode_COMPUTED) && (param->definition != NULL))
          {
             nextName = DM_ENG_Parameter_getLongName(param->definition, name);
@@ -1357,8 +1357,8 @@ int DM_ENG_ParameterManager_addObject(DM_ENG_EntityType entity, char* objectName
    if (param->storageMode == DM_ENG_StorageMode_DM_ONLY)
    {
       if ((unsigned int)param->minValue >= INT_MAX) return DM_ENG_RESOURCES_EXCEEDED;
-        // le nouveau numero d'instance est tjrs incrémenté. Une fois le numero INT_MAX atteint, il n'est plus possible de créer
-        // de nouvelles instances => mettre en place un mécanisme pour la réutilisation des instance numbers libérés
+        // le nouveau numero d'instance est tjrs incrï¿½mentï¿½. Une fois le numero INT_MAX atteint, il n'est plus possible de crï¿½er
+        // de nouvelles instances => mettre en place un mï¿½canisme pour la rï¿½utilisation des instance numbers libï¿½rï¿½s
       param->minValue++;
       *pInstanceNumber = (unsigned int)param->minValue;
       DM_ENG_Parameter_commit(param); // interblocage possible ? Non, car pas de notification sur les noeuds
@@ -1406,12 +1406,12 @@ int DM_ENG_ParameterManager_deleteObject(DM_ENG_EntityType entity, char* objectN
 
    if ((proto->storageMode != DM_ENG_StorageMode_DM_ONLY) && (entity != DM_ENG_EntityType_SYSTEM))
    {
-      // Suppression effective du paramètre
+      // Suppression effective du paramï¿½tre
       res = DM_ENG_Device_deleteObject(proto->name, instanceNumber);
    }
 
    if ((res == 0)
-    || (res == DM_ENG_INVALID_PARAMETER_NAME)) // L'instance n'est pas présente au niveau système, elle ne doit pas être dans le data model non plus
+    || (res == DM_ENG_INVALID_PARAMETER_NAME)) // L'instance n'est pas prï¿½sente au niveau systï¿½me, elle ne doit pas ï¿½tre dans le data model non plus
    {
       DM_ENG_Parameter_updateValue(proto, NULL, true); // efface la valeur et positionne VALUE_CHANGED
                                                        // interblocage possible ? Non, pas de notification sur les noeuds
@@ -1442,7 +1442,7 @@ void DM_ENG_ParameterManager_commitParameter(const char* name)
    DM_ENG_Parameter* param = DM_ENG_ParameterData_getParameter(name);
    if ((param == NULL) || DM_ENG_Parameter_isNode(param->name)) { return; }
 
-   char* nextName = NULL; // nom pour commit récursif dans le cas des redirections
+   char* nextName = NULL; // nom pour commit rï¿½cursif dans le cas des redirections
    if ((param->storageMode == DM_ENG_StorageMode_COMPUTED) && (param->definition != NULL))
    {
       nextName = DM_ENG_Parameter_getLongName(param->definition, name);
@@ -1462,7 +1462,7 @@ void DM_ENG_ParameterManager_commitParameter(const char* name)
       }
       if ((DM_ENG_Parameter_isDiagnosticsState(name)) && (strcmp(param->value, DM_ENG_REQUESTED_STATE) == 0))
       {
-         pvs->type =(DM_ENG_ParameterType) 1; // type mis à 1 si le State est positionné à Requested (sinon il reste à 0)
+         pvs->type =(DM_ENG_ParameterType) 1; // type mis ï¿½ 1 si le State est positionnï¿½ ï¿½ Requested (sinon il reste ï¿½ 0)
       }
       free(objName);
    }
@@ -1481,7 +1481,7 @@ void DM_ENG_ParameterManager_commitParameter(const char* name)
    {
       acsParametersToUpdate = true;
    }
-   else // paramètres de contrôle des objets 'statistiques'
+   else // paramï¿½tres de contrï¿½le des objets 'statistiques'
    {
       int k = strlen(name)-1;
       while ((k>0) && (name[k]!='.')) { k--; }
@@ -1522,7 +1522,7 @@ void DM_ENG_ParameterManager_unsetParameter(const char* name)
    DM_ENG_Parameter* param = DM_ENG_ParameterData_getParameter(name);
    if ((param == NULL) || DM_ENG_Parameter_isNode(param->name)) { return; }
 
-   bool cancelled = DM_ENG_Parameter_cancelChange(param); // cancelled permet d'éviter les boucles infinies
+   bool cancelled = DM_ENG_Parameter_cancelChange(param); // cancelled permet d'ï¿½viter les boucles infinies
 
    if (cancelled && (param->storageMode == DM_ENG_StorageMode_COMPUTED) && (param->definition != NULL))
    {
@@ -1580,7 +1580,7 @@ bool DM_ENG_ParameterManager_isInformParameter(const char* name)
    return res;
 }
 
-/////////// Accès à des paramètres particuliers ////////////
+/////////// Accï¿½s ï¿½ des paramï¿½tres particuliers ////////////
 
 /**
  * @return A particular parameter value
@@ -1655,7 +1655,7 @@ char* DM_ENG_ParameterManager_getSerialNumber()
    return res;
 }
 
-////// Accès aux données persistantes (en plus des paramètres) ///////
+////// Accï¿½s aux donnï¿½es persistantes (en plus des paramï¿½tres) ///////
 
 /**
  * Add a scheduled Inform
@@ -1666,7 +1666,7 @@ void DM_ENG_ParameterManager_addScheduledInformCommand(time_t time, char* comman
 }
 
 /**
- * Retourne l'échéance la plus proche, événement PERIODIC ou SCHEDULED, ou téléchargement planifié
+ * Retourne l'ï¿½chï¿½ance la plus proche, ï¿½vï¿½nement PERIODIC ou SCHEDULED, ou tï¿½lï¿½chargement planifiï¿½
  */
 time_t DM_ENG_ParameterManager_getNextTimeout()
 {
@@ -1675,7 +1675,7 @@ time_t DM_ENG_ParameterManager_getNextTimeout()
    if ((scheduledInformTime != 0) && ((timeout==0) || (scheduledInformTime < timeout))) { timeout = scheduledInformTime; }
    time_t transferTime = 0;
    DM_ENG_TransferRequest* tr = DM_ENG_ParameterData_getTransferRequests();
-   while (tr != NULL) // on recherche le 1er transfert non démarré
+   while (tr != NULL) // on recherche le 1er transfert non dï¿½marrï¿½
    {
       if (tr->state == _NOT_YET_STARTED)
       {
@@ -1729,7 +1729,7 @@ int DM_ENG_ParameterManager_incRetryCount()
 }
 
 /*
- * Traite une requête de téléchargement
+ * Traite une requï¿½te de tï¿½lï¿½chargement
  */
 int DM_ENG_ParameterManager_manageTransferRequest(bool isDownload, unsigned int delay, char* fileType, char* url, char* username, char* password,
         unsigned int fileSize, char* targetFileName, char* successURL, char* failureURL, char* commandKey, OUT DM_ENG_TransferResultStruct** pResult)
@@ -1745,7 +1745,7 @@ int DM_ENG_ParameterManager_manageTransferRequest(bool isDownload, unsigned int 
       tr->state = _IN_PROGRESS;
       time(&start);
       res = _applyTransferRequest(tr);
-      if (res!=1) // requête traitée de façon synchrone (avec succès ou non), on la supprime de la file
+      if (res!=1) // requï¿½te traitï¿½e de faï¿½on synchrone (avec succï¿½s ou non), on la supprime de la file
       {
          time(&comp);
          DM_ENG_ParameterData_removeTransferRequest(tr->transferId);
@@ -1761,7 +1761,7 @@ int DM_ENG_ParameterManager_manageTransferRequest(bool isDownload, unsigned int 
 }
 
 /*
- * Construit la table des requêtes de téléchargement dans la file
+ * Construit la table des requï¿½tes de tï¿½lï¿½chargement dans la file
  */
 int DM_ENG_ParameterManager_getAllQueuedTransfers(OUT DM_ENG_AllQueuedTransferStruct** pResult[])
 {
@@ -1781,10 +1781,10 @@ int DM_ENG_ParameterManager_getAllQueuedTransfers(OUT DM_ENG_AllQueuedTransferSt
 }
 
 //////////////////////////////////////////////////////
-/////////// Gestion des accès concurrents ////////////
+/////////// Gestion des accï¿½s concurrents ////////////
 //////////////////////////////////////////////////////
 
-// file des notifications de changements par le système
+// file des notifications de changements par le systï¿½me
 static void processChange(const char* name);
 static void processValueChange(const char* name, char* value);
 static void processTransferCompleteResult(DM_ENG_TransferRequest* result);
@@ -1794,8 +1794,8 @@ static void processVendorSpecificEvent(char* eventCode);
 static bool _inSession = false;
 
 /**
- * Verrouille la ressource "paramètres" si disponible
- * @return true si la ressource a pu être verrouillée
+ * Verrouille la ressource "paramï¿½tres" si disponible
+ * @return true si la ressource a pu ï¿½tre verrouillï¿½e
  */
 static bool tryLock()
 {
@@ -1817,31 +1817,31 @@ void DM_ENG_ParameterManager_lockDM()
 }
 
 /**
- * Verrouille la ressource "paramètres"
+ * Verrouille la ressource "paramï¿½tres"
  * en attendant qu'elle soit rendue disponible si elle ne l'est pas
  */
 void DM_ENG_ParameterManager_lock()
 {
-   if (_dataMutex == NULL) return; // l'accès à la ressource est déjà clos
-
+   if (_dataMutex == NULL) return; // l'accï¿½s ï¿½ la ressource est dï¿½jï¿½ clos
+   DBG("DM_ENG_ParameterManager_lock");
    DM_ENG_ParameterManager_lockDM();
    DM_ENG_Device_openSession();
    _inSession = true;
 }
 
 /**
- * Demande de déverrouillage de la ressource "Paramètres"
- * Si les données ont été modifiées, celles-ci sont tout d'abord sauvegardées.
- * Si la file d'attente des notifications système n'est pas vide, celles-ci sont traitées en priorité.
+ * Demande de dï¿½verrouillage de la ressource "Paramï¿½tres"
+ * Si les donnï¿½es ont ï¿½tï¿½ modifiï¿½es, celles-ci sont tout d'abord sauvegardï¿½es.
+ * Si la file d'attente des notifications systï¿½me n'est pas vide, celles-ci sont traitï¿½es en prioritï¿½.
  */
 void DM_ENG_ParameterManager_unlock()
 {
-   if (_dataMutex == NULL) return; // l'accès à la ressource est déjà clos
+   if (_dataMutex == NULL) return; // l'accï¿½s ï¿½ la ressource est dï¿½jï¿½ clos
 
    DM_CMN_Thread_lockMutex(_dataMutex);
    if (periodicInformChanged) { _computeNextPeriodicInformTime(); }
 
-   // effacement des valeurs des paramètres SYSTEM_ONLY
+   // effacement des valeurs des paramï¿½tres SYSTEM_ONLY
    DM_ENG_Parameter* param;
    for (param = DM_ENG_ParameterData_getFirst(); param!=NULL; param = DM_ENG_ParameterData_getNext())
    {
@@ -1855,7 +1855,7 @@ void DM_ENG_ParameterManager_unlock()
       periodicInformChanged = false;
    }
 
-   // on traite prioritairement les changements notifiés par le système avant de déverrouiller
+   // on traite prioritairement les changements notifiï¿½s par le systï¿½me avant de dï¿½verrouiller
    while (true)
    {
       DM_CMN_Thread_lockMutex(_changesMutex);
@@ -1913,7 +1913,7 @@ void DM_ENG_ParameterManager_unlock()
 
    DBG("Unlocking...");
 
-   // contrôle des changements sur les paramètres computed
+   // contrï¿½le des changements sur les paramï¿½tres computed
    char* prmName;
    for (prmName = DM_ENG_ParameterData_getFirstName(); prmName!=NULL; prmName = DM_ENG_ParameterData_getNextName())
    {
@@ -1927,7 +1927,7 @@ void DM_ENG_ParameterManager_unlock()
       }
    }
    DM_ENG_ParameterData_sync();
-   
+
    while (diagnosticsRequested != NULL)
    {
       bool requested = (diagnosticsRequested->type == 1);
@@ -1955,7 +1955,7 @@ void DM_ENG_ParameterManager_unlock()
 }
 
 /*
- * Lance un reboot si demandé (cette fonction doit être appelée hors session ou en fin de session)
+ * Lance un reboot si demandï¿½ (cette fonction doit ï¿½tre appelï¿½e hors session ou en fin de session)
  */
 void DM_ENG_ParameterManager_checkReboot()
 {
@@ -1968,18 +1968,18 @@ void DM_ENG_ParameterManager_checkReboot()
 }
 
 /**
- * Cette méthode doit être appelée lorsque les data sont verrouillées.
- * Elle permet la sauvegarde des données avant déverrouillage au cas où on aurait un plantage
- * ou un redémarrage avant un unlock().
- * 
- * Dans le même temps, les valeurs calculées sont effacées. Cette fct étant appelée après les modifs apportées au data model (via les RPC
- * SetParameterValues, AddObject etc.), cela permet de réactualiser les valeurs lors d'un prochain accès par GetParameterValues.
+ * Cette mï¿½thode doit ï¿½tre appelï¿½e lorsque les data sont verrouillï¿½es.
+ * Elle permet la sauvegarde des donnï¿½es avant dï¿½verrouillage au cas oï¿½ on aurait un plantage
+ * ou un redï¿½marrage avant un unlock().
+ *
+ * Dans le mï¿½me temps, les valeurs calculï¿½es sont effacï¿½es. Cette fct ï¿½tant appelï¿½e aprï¿½s les modifs apportï¿½es au data model (via les RPC
+ * SetParameterValues, AddObject etc.), cela permet de rï¿½actualiser les valeurs lors d'un prochain accï¿½s par GetParameterValues.
  */
 void DM_ENG_ParameterManager_sync(bool resetComputed)
 {
    if (resetComputed)
    {
-      // effacement des valeurs calculées
+      // effacement des valeurs calculï¿½es
       DM_ENG_Parameter* param;
       for (param = DM_ENG_ParameterData_getFirst(); param!=NULL; param = DM_ENG_ParameterData_getNext())
       {
@@ -1991,7 +1991,7 @@ void DM_ENG_ParameterManager_sync(bool resetComputed)
 }
 
 //////////////////////////////////////////////////////////////
-/////////// Implémentation ParameterBackInterface ////////////
+/////////// Implï¿½mentation ParameterBackInterface ////////////
 //////////////////////////////////////////////////////////////
 
 static bool _checkValueChange(DM_ENG_Parameter* param)
@@ -1999,7 +1999,7 @@ static bool _checkValueChange(DM_ENG_Parameter* param)
    bool res = false;
    if (DM_ENG_Parameter_isValuable(param->name))
    {
-      if (param->value == NULL) // inconnue => on considère qu'on a un changement
+      if (param->value == NULL) // inconnue => on considï¿½re qu'on a un changement
       {
          res = true;
          DM_ENG_Parameter_updateValue(param, NULL, true); // efface la valeur et positionne VALUE_CHANGED
@@ -2015,7 +2015,7 @@ static bool _checkValueChange(DM_ENG_Parameter* param)
          int codeRetour = DM_ENG_Device_getValue(param->name, data, &actualValue);
          if (codeRetour==0)
          {
-            if (actualValue==NULL) { actualValue = (char*)DM_ENG_EMPTY; } // NULL interprété comme Empty
+            if (actualValue==NULL) { actualValue = (char*)DM_ENG_EMPTY; } // NULL interprï¿½tï¿½ comme Empty
             if (strcmp(actualValue, param->value) != 0)
             {
                res = true;
@@ -2052,7 +2052,7 @@ static void processChange(const char* name)
       }
       else
       {
-         // utile si l'URL est stocké au niveau système
+         // utile si l'URL est stockï¿½ au niveau systï¿½me
          // if (name.equals(ACS_URL_PARAMETER_NAME)) { setBootstrapSent(false); }
          _checkValueChange(param);
       }
@@ -2074,7 +2074,7 @@ void DM_ENG_ParameterManager_dataValueChanged(const char* name)
       DBG("DataValueChanged - End");
       DM_ENG_ParameterManager_unlock();
    }
-   else // on place les noms de paramètres dans une file d'attente
+   else // on place les noms de paramï¿½tres dans une file d'attente
    {
       DM_CMN_Thread_lockMutex(_changesMutex);
       DM_ENG_addSystemNotificationStruct(&pendingChanges, DM_ENG_newSystemNotificationStruct(DM_ENG_PATH_CHANGE, strdup(name)));
@@ -2129,7 +2129,7 @@ void DM_ENG_ParameterManager_updateParameterNames(const char* name, DM_ENG_Param
          _getParameter(paramList[j]->parameterName);
       }
 
-      // supprime les noeuds obsolètes
+      // supprime les noeuds obsolï¿½tes
       int len = strlen(name);
       char* aSupprimer = NULL;
       char* prmName;
@@ -2151,8 +2151,8 @@ void DM_ENG_ParameterManager_updateParameterNames(const char* name, DM_ENG_Param
                }
                if (!trouve)
                {
-                  // si c'est un objet de type instance qui n'a pas été trouvé, on peut le supprimer
-                  // (Les paramètres fixes du data model même s'ils ne sont pas remontés ne sont pas supprimés)
+                  // si c'est un objet de type instance qui n'a pas ï¿½tï¿½ trouvï¿½, on peut le supprimer
+                  // (Les paramï¿½tres fixes du data model mï¿½me s'ils ne sont pas remontï¿½s ne sont pas supprimï¿½s)
                   aSupprimer = strdup(prmName);
                   break;
                }
@@ -2163,7 +2163,7 @@ void DM_ENG_ParameterManager_updateParameterNames(const char* name, DM_ENG_Param
          DM_ENG_ParameterData_deleteObject(aSupprimer);
          DM_ENG_FREE(aSupprimer);
       }
-      while (true); // dans le cas où il y a eu un objet supprimé, on recommence
+      while (true); // dans le cas oï¿½ il y a eu un objet supprimï¿½, on recommence
    }
 }
 
@@ -2177,8 +2177,8 @@ void DM_ENG_ParameterManager_updateParameterValues(DM_ENG_ParameterValueStruct* 
          char* name = (char*)paramList[j]->parameterName;
          if (DM_ENG_Parameter_isNode(name))
          {
-            // Si cet élement de la liste a un nom d'objet, on traite la demande, à partir de cet élément
-            // comme une mise à jour de l'objet (avec ajouts et suppressions possibles d'instances)
+            // Si cet ï¿½lement de la liste a un nom d'objet, on traite la demande, ï¿½ partir de cet ï¿½lï¿½ment
+            // comme une mise ï¿½ jour de l'objet (avec ajouts et suppressions possibles d'instances)
             _updateObject(name, paramList+j+1, true);
             DM_ENG_Parameter_updateValue(DM_ENG_ParameterData_getParameter(name), NULL, true); // efface la valeur et positionne VALUE_CHANGED
             break;
@@ -2248,9 +2248,9 @@ static void processTransferCompleteResult(DM_ENG_TransferRequest* result)
  * Notify the DM Engine that a transfer operation completes.
  *
  * @param transferId An integer that uniquely identifies the transfer request in the queue of transfers
- * @param code Code résultat du téléchargement : 0 si OK, code d'erreur 90XX sinon
- * @param startTime Date de démarrage du téléchargement
- * @param completeTime Date de fin du téléchargement
+ * @param code Code rï¿½sultat du tï¿½lï¿½chargement : 0 si OK, code d'erreur 90XX sinon
+ * @param startTime Date de dï¿½marrage du tï¿½lï¿½chargement
+ * @param completeTime Date de fin du tï¿½lï¿½chargement
  */
 void DM_ENG_ParameterManager_transferComplete(unsigned int transferId, unsigned int code, time_t startTime, time_t completeTime)
 {
@@ -2306,7 +2306,7 @@ unsigned int DM_ENG_ParameterManager_autonomousTransferInProgress(char* announce
  * @param fileType File type as specified in TR-069
  * @param fileSize Size of the file to be transfered in bytes
  * @param targetFileName File name to be used on the target file system
- * @param code 0 if the transfer was successful, otherwize à fault code
+ * @param code 0 if the transfer was successful, otherwize ï¿½ fault code
  * @param startTime Date and time the transfer was started in UTC
  * @param completeTime Date and time the transfer was completed and applied in UTC
  */
@@ -2402,7 +2402,7 @@ void DM_ENG_ParameterManager_vendorSpecificEvent(const char* OUI, const char* ev
 }
 
 /**
- * Permet la synchronisation sur l'arrêt du scheduler
+ * Permet la synchronisation sur l'arrï¿½t du scheduler
  */
 void DM_ENG_ParameterManager_join()
 {
