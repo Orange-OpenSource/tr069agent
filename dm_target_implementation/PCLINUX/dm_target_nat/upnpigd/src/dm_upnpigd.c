@@ -59,10 +59,10 @@
 #include "DM_ENG_RPCInterface.h"  		/* DM_Engine module definition    */
 #include "DM_GlobalDefs.h"			/* */
 #include "DM_ENG_Parameter.h"			/* */
-#include "DM_ENG_Common.h"			/* */
 #include "dm_com_utils.h"			/* */
 #include "DM_COM_ConnectionSecurity.h"		/* */
 #include "CMN_Trace.h"
+#include "DM_ENG_Device.h"
 
 #if 0
 #include "DM_ENG_Device.h"
@@ -92,9 +92,9 @@ static struct UPNPDev * dev;
 // variables for UPNP_GetValidIGD()
 static char lanaddr[40] = "unset";	/* ip address on the LAN */
 // variables for GetExternalIPAddress()
-static char extIpAddr[40];
+static char extIpAddr[40] = "unset";
 // variables for AddAnyPortMapping
-static char  reservedPort [6];
+static char  reservedPort [6] = "unset";
 static char * remoteHost = NULL;
 static int iextPort = 7547;
 static char extPort[6] = "unset";
@@ -102,7 +102,8 @@ static char extPort[6] = "unset";
 static char inPort[6] = "50805";
 static char * proto = "TCP";
 static char leaseDuration[16]= "3600";
-
+/*parameter name for update value*/
+static char* connectionrequesturl = "ManagementServer.ConnectionRequestURL";
 // --------------------------------------------------------------------
 // New definitions
 // --------------------------------------------------------------------
@@ -117,9 +118,8 @@ static char leaseDuration[16]= "3600";
 
 // __DB dialog functions__
 static int DM_IGD_buildConnectionRequestUrl(char** pResult);
-/*remoteHost, extport, protocol, internalClient are the same as an existing mapping, other existing values are overwritten*/
-static int DM_IGD_activeLeaseDuration(struct UPNPDev* dev, char* inPort, char* desc, char* leaseDuration);
-
+static bool DM_IGD_updateParameterValue(char* parameterName, DM_ENG_ParameterType type, char* value);
+bool DM_IGD_getParameterValue(char* parameterName, char** value);
 /**
  * @brief the dm_upnpigd thread
  *
@@ -133,11 +133,107 @@ static int DM_IGD_activeLeaseDuration(struct UPNPDev* dev, char* inPort, char* d
 void*
 DM_IGD_upnpigdThread()
 {
-
+  do {
+    char* pResult = NULL;
+    DM_IGD_getParameterValue(connectionrequesturl, &pResult);
+    DBG("connectionrequesturl VALUE IS %s\n", pResult);
+    free(pResult);
+    DBG("Sleep for leaseDuration time then rebuild ConnectionRequestUrl/refresh leaseDuration\n");
+    /*int ileaseDuration = atoi(leaseDuration);
+    sleep(ileaseDuration);*/
+    sleep(60);
+  } while(true);
 }
 // --------------------------------------------------------------------
 // Functions definitions
 // --------------------------------------------------------------------
+
+bool
+DM_IGD_getParameterValue(char* parameterName, char** value)
+{
+	DM_ENG_ParameterValueStruct**	pResult = NULL;
+	char*				pParameterName[2];
+	int				  err;
+	bool				bRet    = true;
+
+	DBG("UPnP IGD - DM_IGD_getParameterValue - parameterName = %s", parameterName);
+  *value = NULL;
+
+	// -------------------------------------------------------------------------------
+	// Initialize the array for the DM_ENGINE call with a NULL at the end
+	// -------------------------------------------------------------------------------
+	pParameterName[0]=parameterName;
+	pParameterName[1]=NULL;
+
+	// -------------------------------------------------------------------------------
+	// Request the value of the parameter name given from the DM_Engine
+	// -------------------------------------------------------------------------------
+	err = DM_ENG_GetParameterValues( DM_ENG_EntityType_ANY, (char**)pParameterName, &pResult );
+
+	if ( (err == 0) && (pResult != NULL) && (strcmp(parameterName, (char*)pResult[0]->parameterName) == 0 ) )
+	{
+		DBG( "Parameter name : %s = '%s' (type = %d)", (char*)pResult[0]->parameterName, (char*)pResult[0]->value, pResult[0]->type );
+		if(NULL != (char*)pResult[0]->value ) {
+		  *value= strdup( (char*)pResult[0]->value );
+		}
+		DM_ENG_deleteTabParameterValueStruct(pResult);
+	} else {
+		EXEC_ERROR( "error code = %d ", err);
+
+		bRet = false;
+	} // IF
+
+	return( bRet );
+} // DM_STUN_getParameterValue
+
+/**
+ * @brief Update a value from the DB
+ *
+ * @param parameterName (R)
+ * @param DM_ENG_ParameterType (R)
+ * @param value (R)
+ *
+ * @return Return true if okay else false
+ *
+ */
+bool
+DM_IGD_updateParameterValue(char* parameterName, DM_ENG_ParameterType type, char* value)
+{
+	bool bRet = false;
+	DM_ENG_ParameterValueStruct*		pParameterList[2];
+	DM_ENG_ParameterStatus			    status;
+	DM_ENG_SetParameterValuesFault**	faults = NULL;
+
+	pParameterList[0] = DM_ENG_newParameterValueStruct(parameterName,type, value);
+	pParameterList[1] = NULL;
+
+	DBG( "updating %s parameter with %s value", parameterName, value );
+	if ( DM_ENG_SetParameterValues( DM_ENG_EntityType_SYSTEM, pParameterList, "", &status, &faults) != 0 )
+	{
+		EXEC_ERROR( "update not performed" );
+		unsigned char i = 0;
+		while ( NULL != faults[i] )
+		{
+			EXEC_ERROR( "Error %u while updating the '%s' parameter.", faults[i]->faultCode, faults[i]->parameterName );
+			i++;
+		} // WHILE
+		ASSERT( FALSE );
+	} else {
+		bRet = true;
+		DBG( "Updating the '%s'='%s' parameter : OK ", parameterName, value );
+	} // IF
+
+	// Free the memory previously allocated
+	DM_ENG_deleteParameterValueStruct( pParameterList[0] );
+	if ( NULL != faults )
+	{
+		DM_ENG_deleteTabSetParameterValuesFault( faults );
+	}
+
+	return( bRet );
+} // DM_STUN_updateParameterValue
+
+
 int DM_IGD_buildConnectionRequestUrl(char** pResult)
 {
   int strSize = 0;
@@ -148,17 +244,11 @@ int DM_IGD_buildConnectionRequestUrl(char** pResult)
 													 0/*localport*/, ipv6, ttl, &error);
 	if (devlist) {
     int i, reten, retam;
-		// here needs to check how many connections found. Ideally only one connection found, either IPConnection or PPPConnection.
-		// But IPConnection could have two types: IPConnection:1 or IPConnection:2
-		// Is it possible to have both these two IPConnection on the same device?
 		for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
 			DBG("Found device %3d: %-48s\n", i, dev->st);
       // variables for UPNP_GetValidIGD()
       struct UPNPUrls urls;
       struct IGDdatas data;
-			// get more information from descURL using UPNP_GetValidIGD
-			// return of state: -1 internal error, 0 no IGD found, 1 valid connected IGD found,
-			// 2 valid IGD found but not connected, 3 UPnP device found but not recognized as IGD
 			int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
 			if (state == 1) {
 				DBG("local LAN IP Address is %s\n", lanaddr);
@@ -180,12 +270,15 @@ int DM_IGD_buildConnectionRequestUrl(char** pResult)
             if (retam == UPNPCOMMAND_SUCCESS){
               DBG("AddAnyPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
                                                                 reservedPort, inPort, leaseDuration);
-              strSize = strlen(extIpAddr) + strlen(reservedPort) + 2;
+              strSize = strlen("http://") + strlen(extIpAddr) + strlen(reservedPort) + 20;
               *pResult = (char*)malloc(strSize);
               memset((void *) *pResult, 0x00, strSize);
-              strcpy(*pResult, extIpAddr);
+              strcpy(*pResult, "http://");
+              strcat(*pResult, extIpAddr);
               strcat(*pResult, ":");
               strcat(*pResult, reservedPort);
+              strcat(*pResult, "/");
+              strcat(*pResult, g_randomCpeUrl);
               ret = 0;
             } else {
               DBG("AddAnyPortMapping Error!!! Error code: %d, %s\n", retam, strupnperror(retam));
@@ -225,12 +318,15 @@ int DM_IGD_buildConnectionRequestUrl(char** pResult)
                   strcpy(reservedPort,extPort);
                   DBG("AddPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
                                                                      reservedPort, inPort, leaseDuration);
-                  strSize = strlen(extIpAddr) + strlen(reservedPort) + strlen(":") + 2;
+                  strSize = strlen("http://") + strlen(extIpAddr) + strlen(reservedPort) + 20;
                   *pResult = (char*)malloc(strSize);
                   memset((void *) *pResult, 0x00, strSize);
-                  strcpy(*pResult, extIpAddr);
+                  strcpy(*pResult, "http://");
+                  strcat(*pResult, extIpAddr);
                   strcat(*pResult, ":");
                   strcat(*pResult, reservedPort);
+                  strcat(*pResult, "/");
+                  strcat(*pResult, g_randomCpeUrl);
                   ret = 0;
                 }
               }
