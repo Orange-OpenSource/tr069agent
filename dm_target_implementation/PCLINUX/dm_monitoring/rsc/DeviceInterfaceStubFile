@@ -1,0 +1,32 @@
+# 
+# This file is used to by the Device Adpter to Set/Get values
+# This file must be updated with your own parameters values
+# 
+DeviceInfo.Manufacturer "MyManufacturer"
+DeviceInfo.ManufacturerOUI "0016AE"
+DeviceInfo.ProductClass "TR69Generic"
+DeviceInfo.SerialNumber "JINGBO"
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress "10.194.58.69"
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Username "myIPClientUsername"
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Name "myIPClientName"
+DeviceSummary "myDeviceSummary"
+DeviceInfo.HardwareVersion "HV1.0.0"
+DeviceInfo.SoftwareVersion "SV1.0.5"
+DeviceInfo.ProvisioningCode ""
+DeviceInfo.SpecVersion "1.0"
+WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.MACAddress "00:11:22:33:44:55"
+WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress "00:11:22:33:44:55"
+ManagementServer.ConnectionRequestPassword "cRP#JINGBO"
+LANDevice.1.Hosts.Host.1.MACAddress "00:11:22:33:44:55"
+#LAN.IPAddress "10.194.58.69"
+# Below are NO DATAMODEL PATH
+# Next software version to use after a successful download
+NextSoftwareVersionAfterDownloadSuccess "SV1.0.6"
+# OUI to send in a X INFORM request by the end user
+X_OUI_INFORM "001349"
+# EVENT to send in a X INFORM request by the end user
+X_EVENT_INFORM "GUI"
+# TargetFile Name to store the downloaded file (when no file name provided)
+TargetFileName "/tmp/myTargetFileName"
+# Name of the file to upload (Path and File)
+FileNameToUpload "/home/huam7374/Travail_local/TR069_GENERIQUE/Codex/tr069agent/trunk/obj/DeviceInterfaceStubFile"
