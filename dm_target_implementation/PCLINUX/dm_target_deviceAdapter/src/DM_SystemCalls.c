@@ -31,6 +31,7 @@
 #include "DM_SystemCalls.h"
 #include "DM_ENG_Error.h"
 #include "CMN_Trace.h"
+#include "DM_GlobalDefs.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -51,6 +52,66 @@ static const char* LOG_DIR = "/var/log/adm/";
 
 static struct sysinfo _info;
 static bool _infoLoaded = false;
+
+#define SERIAL_NUMBER_COMMAND "dmidecode -s system-serial-number" // Linux command to get the serial number
+#define SERIAL_NUMBER_MAX_LENGTH 30
+#define MACADDRESS_PATH_PREFIX "/sys/class/net/"
+#define MACADDRESS_FILE "/address"
+
+static char *_get_serial_number(){
+   char *res;
+   char serial_number[SERIAL_NUMBER_MAX_LENGTH];
+   FILE *fp = popen(SERIAL_NUMBER_COMMAND, "r");
+
+   if(fp == NULL)
+   {
+      DBG("Unable to execute command %s", SERIAL_NUMBER_COMMAND);
+      return NULL;
+   }
+
+   if( fgets(serial_number, sizeof(serial_number), fp) != NULL)
+   {
+      /* writing content to stdout */
+      DBG("serial_number = %s",serial_number);
+   }
+   res = strdup(serial_number);
+
+   fclose(fp);
+   return res;
+}
+
+static char *_get_MACAddress(){
+   char *res;
+   FILE *fp;
+   char *macAddress;
+   char *address_file_path;
+
+   address_file_path = (char *) malloc(1 + strlen(MACADDRESS_PATH_PREFIX) + strlen(ETH_INTERFACE) + strlen(MACADDRESS_FILE) );
+   strcpy(address_file_path, MACADDRESS_PATH_PREFIX);
+   strcat(address_file_path, ETH_INTERFACE);
+   strcat(address_file_path, MACADDRESS_FILE);
+
+   fp = fopen(address_file_path, "r");
+   if(fp == NULL)
+   {
+      DBG("%s File open error", address_file_path);
+      return NULL;
+   }
+
+   macAddress = malloc(30 * sizeof(char));
+
+   if( fgets(macAddress, 18, fp) != NULL)
+   {
+            /* writing content to stdout */
+      DBG("macaddress = %s",macAddress);
+   }
+   res = strdup(macAddress);
+
+   free(macAddress);
+   free(address_file_path);
+   fclose(fp);
+   return res;
+}
 
 void DM_SystemCalls_reboot(bool factoryReset UNUSED)
 {
@@ -173,6 +234,16 @@ char* DM_SystemCalls_getSystemData(const char* name, const char* data)
    {
       if (!_infoLoaded) { _infoLoaded = (sysinfo(&_info) == 0); }
       if (_infoLoaded) { sVal = DM_ENG_longToString(_info.uptime); }
+   }
+   else if (strcmp(name, LANDEVICE_1_HOSTS_HOST_1_MACADDRESS) == 0)
+   {
+      DBG("Searching for the MACAddress");
+      sVal = _get_MACAddress();
+   }
+   else if (strcmp(name, DEVICEINFO_SERIALNUMBER) == 0)
+   {
+      DBG("Searching for the Serial Number");
+      sVal = _get_serial_number();
    }
    else if ((data != NULL) && (*data != '\0'))
    {

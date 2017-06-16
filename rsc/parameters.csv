@@ -24,7 +24,7 @@ DeviceInfo.ProvisioningCode;STRING;1;1;1;1;1;0;;;0;0
 DeviceInfo.DeviceStatus;STRING;2;1;0;0;0;0;;;0;0
 DeviceInfo.SpecVersion;STRING;1;0;0;0;1;0;;1.1;0;0
 ManagementServer.;ANY;0;0;0;0;0;0;;;0;0
-ManagementServer.URL;STRING;0;1;1;2;0;0;;http://my.acs.url/tr69;0;0
+ManagementServer.URL;STRING;0;1;1;2;0;0;;http://g-acsdev.rd.francetelecom.fr:8080/nbbsora/tr69;0;0
 ManagementServer.Username;STRING;0;1;1;2;0;0;;;0;0
 ManagementServer.Password;STRING;0;1;1;2;0;0;;;0;0
 ManagementServer.ParameterKey;STRING;0;1;1;2;1;0;;;0;0
@@ -60,4 +60,9 @@ WANDevice.1.WANDSLInterfaceConfig.UpstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
 WANDevice.1.WANDSLInterfaceConfig.DownstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
 WANDevice.1.WANDSLInterfaceConfig.UpstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
 WANDevice.1.WANDSLInterfaceConfig.DownstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
+LANDevice.;ANY;0;0;0;0;0;0;;;0;0
+LANDevice.1.;ANY;0;0;0;0;0;0;;;0;0
+LANDevice.1.Hosts.;ANY;0;0;0;0;0;0;;;0;0
+LANDevice.1.Hosts.Host.;ANY;0;0;0;0;0;0;;;0;0
+LANDevice.1.Hosts.Host.1.;ANY;0;0;0;0;0;0;;;0;0
 LANDevice.1.Hosts.Host.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
