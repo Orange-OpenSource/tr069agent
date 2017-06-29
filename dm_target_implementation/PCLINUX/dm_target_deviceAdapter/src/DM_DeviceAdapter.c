@@ -784,7 +784,6 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
 
    else if (strcmp(shortname, FileList_SHORT_NAME)==0)
    {
-     DBG("ENTRE LE BOUCLED DE FileList.");
      int nbParam = 0;
      DIR *dirp;
      struct dirent *dent;
@@ -798,7 +797,6 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
          }
        }
      closedir(dirp);
-     DBG("nbParam IS %d", nbParam);
 
      *pParamVal = (DM_ENG_ParameterValueStruct**)calloc(2*nbParam+1, sizeof(DM_ENG_ParameterValueStruct*));
 
@@ -812,7 +810,6 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
                char* pathname = (char*)calloc(strlen(FileList_PATH)+strlen(dent->d_name)+1, sizeof(char*));
                strcpy(pathname, FileList_PATH);
                strcat(pathname, dent->d_name);
-               DBG("pathname is %s", pathname);
                if (!stat(pathname, &file_stats)){
 
                char* nbinstance = DM_ENG_intToString(j+1);
@@ -821,18 +818,14 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
                strcat(paramsubname, nbinstance);
                strcat(paramsubname, ".");
                strcat(paramsubname, "name");
-               DBG("paramsubname is %s", paramsubname);
 
                char* paramsubsize = (char*)calloc(strlen(nbinstance)+strlen("size")+2*strlen(".")+1, sizeof(char*));
                strcpy(paramsubsize, ".");
                strcat(paramsubsize, nbinstance);
                strcat(paramsubsize, ".");
                strcat(paramsubsize, "size");
-               DBG("paramsubsize is %s", paramsubsize);
 
-               DBG("file name is %s", dent->d_name);
                char* cfilesize = DM_ENG_longToString(file_stats.st_size);
-               DBG("file size is %s", cfilesize);
                (*pParamVal)[2*j] = DM_ENG_newParameterValueStruct(paramsubname, DM_ENG_ParameterType_UNDEFINED, dent->d_name);
                (*pParamVal)[2*j+1] = DM_ENG_newParameterValueStruct(paramsubsize, DM_ENG_ParameterType_UNDEFINED, cfilesize);
 
