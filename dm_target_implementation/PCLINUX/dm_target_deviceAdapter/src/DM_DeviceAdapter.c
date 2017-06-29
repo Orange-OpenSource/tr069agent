@@ -167,6 +167,8 @@ static void * _uploadThread(void *data);                           /* Perform up
 static const char* _extractParameterName(const char* parameterFullPath); /* Used to remove the device type tag from the parameter name */
 static int    _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[]);
 static int    _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[]);
+static int    _split_filelist_nbinstance(char* parameterName);
+static int    _split_filelist_nameorsize(char* parameterName, char** result);
 
 #ifndef _WithoutUI_
 static void * _deviceInterfaceSimulationThread(void* data);        /* Used to simulate the Parameter Set Value and DM_ENGINE value change notification */
@@ -305,6 +307,49 @@ static bool _splitSourceAndData(const char* data, OUT int* pSrc,OUT char** pEndD
 }
 
 /**
+ * @brief split an instance of FiliList to find the instance number
+ * @param parameterName Name of instance, exemple: FileList.1.name
+ * @return Return thee found instance number, exemple: 1
+ */
+ static int _split_filelist_nbinstance(char* parameterName) {
+   char* paramcopy = NULL;
+ 	paramcopy = strdup(parameterName);
+ 	int nb_instance = 0;
+ 	char *token = strtok(paramcopy, ".");
+ 	token = strtok(NULL, ".");
+
+ 	if (token == NULL) {
+ 		nb_instance = -1;
+ 	} else {
+ 		nb_instance = atoi(token);
+ 	}
+   //DBG("instance number is %d\n", nb_instance);
+   free(paramcopy);
+ 	return nb_instance;
+ }
+
+ /**
+  * @brief split a FileList parameter to find whether name or size
+  * @param parameterName Name of instance, exemple: FileList.1.name
+  * @param result exemple: name
+  * @return Return 0
+  */
+ static int _split_filelist_nameorsize(char* parameterName, char** result) {
+  char* paramcopy = NULL;
+	paramcopy = strdup(parameterName);
+	char* token = strtok(paramcopy, ".");
+	token = strtok(NULL, ".");
+  token = strtok(NULL, ".");
+
+	if (token != NULL) {
+		*result = strdup(token);
+    //DBG("parameter is %s\n", *result);
+	}
+  free(paramcopy);
+	return 0;
+}
+
+/**
  * @brief Gets the parameter value from system level.
  *
  * @param name Name of the requested parameter according to the TR-069
@@ -403,6 +448,49 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
 
       *pVal = strdup(DM_ENG_NONE_STATE);
 
+  } else if (0 == strncmp(paramNameStr, FileList_SHORT_NAME, strlen(FileList_SHORT_NAME))){
+    int instancenumber = _split_filelist_nbinstance(paramNameStr);
+    char* nameorsize = NULL;
+    _split_filelist_nameorsize(paramNameStr, &nameorsize);
+    //DBG("%s\n", nameorsize);
+    int nbfile = 0;
+    DIR *dirp;
+    struct dirent *dent;
+
+    dirp=opendir(FileList_PATH);
+    while ((dent=readdir(dirp)) != NULL){
+    if (dent){
+      if (dent->d_type == DT_REG){
+        nbfile++;
+        if (nbfile == instancenumber) {
+
+          if (0 == strcmp(nameorsize,"name")){
+
+            strSize = strlen(dent->d_name) + 1;
+            *pVal = (char*)malloc(strSize);
+            memset((void *) *pVal, 0x00, strSize);
+            strcpy(*pVal, dent->d_name);
+
+          } else if (0 == strcmp(nameorsize,"size")){
+
+            struct stat file_stats;
+            char* pathname = (char*)calloc(strlen(FileList_PATH)+strlen(dent->d_name)+1, sizeof(char*));
+            strcpy(pathname, FileList_PATH);
+            strcat(pathname, dent->d_name);
+            if (!stat(pathname, &file_stats)){
+              char* csize = DM_ENG_longToString(file_stats.st_size);
+              strSize = strlen(csize) + 1;
+              *pVal = (char*)malloc(strSize);
+              memset((void *) *pVal, 0x00, strSize);
+              strcpy(*pVal, csize);
+              free(csize);
+              }
+            }
+          }
+        }
+      }
+    }
+    free(nameorsize);
   } else {
 
     // On recherche d'abord le param�tre dans DeviceInterfaceStubFile, fichier qui se place en coupure vis-�-vis de l'acc�s syst�me
@@ -831,11 +919,12 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
      *pNames = (char**)calloc(nbParam+1, sizeof(char*));
      int j;
      for (j=0; j<nbParam;j++){
-       char* cnbParam = DM_ENG_intToString(j+1);
-       cnbParam = realloc(cnbParam, strlen(cnbParam)+strlen(".")+1);
-       strcat(cnbParam, ".");
-       (*pNames)[j] = strdup(cnbParam);
-       free(cnbParam);
+       lastInstanceNumber++;
+       char* slastnb = DM_ENG_intToString(j+1);
+       slastnb = realloc(slastnb, strlen(slastnb)+strlen(".")+1);
+       strcat(slastnb, ".");
+       (*pNames)[j] = strdup(slastnb);
+       free(slastnb);
      }
      (*pNames)[nbParam] = NULL;
      res = 0;
