@@ -771,6 +771,85 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
       free(sV1);
       free(sV2);
       res = 0;
+   }else if (strcmp(shortname, "loadingMode1.")==0){
+     int nbParam = 4;
+     *pParamVal = (DM_ENG_ParameterValueStruct**)calloc(nbParam+1, sizeof(DM_ENG_ParameterValueStruct*));
+     (*pParamVal)[0] = DM_ENG_newParameterValueStruct(".1.name", DM_ENG_ParameterType_UNDEFINED, "name1");
+     (*pParamVal)[1] = DM_ENG_newParameterValueStruct(".1.size", DM_ENG_ParameterType_UNDEFINED, "121");
+     (*pParamVal)[2] = DM_ENG_newParameterValueStruct(".2.name", DM_ENG_ParameterType_UNDEFINED, "name2");
+     (*pParamVal)[3] = DM_ENG_newParameterValueStruct(".2.size", DM_ENG_ParameterType_UNDEFINED, "122");
+     (*pParamVal)[4] = NULL;
+     res = 0;
+   }
+
+   else if (strcmp(shortname, FileList_SHORT_NAME)==0)
+   {
+     DBG("ENTRE LE BOUCLED DE FileList.");
+     int nbParam = 0;
+     DIR *dirp;
+     struct dirent *dent;
+
+     dirp=opendir(FileList_PATH);
+     while ((dent=readdir(dirp)) != NULL){
+       if (dent){
+           if (dent->d_type == DT_REG) {
+             nbParam++;
+           }
+         }
+       }
+     closedir(dirp);
+     DBG("nbParam IS %d", nbParam);
+
+     *pParamVal = (DM_ENG_ParameterValueStruct**)calloc(2*nbParam+1, sizeof(DM_ENG_ParameterValueStruct*));
+
+     dirp=opendir(FileList_PATH);
+     int j = 0;
+     while ((dent=readdir(dirp)) != NULL){
+       if (dent){
+           if (dent->d_type == DT_REG) {
+
+               struct stat file_stats;
+               char* pathname = (char*)calloc(strlen(FileList_PATH)+strlen(dent->d_name)+1, sizeof(char*));
+               strcpy(pathname, FileList_PATH);
+               strcat(pathname, dent->d_name);
+               DBG("pathname is %s", pathname);
+               if (!stat(pathname, &file_stats)){
+
+               char* nbinstance = DM_ENG_intToString(j+1);
+               char* paramsubname = (char*)calloc(strlen(nbinstance)+strlen("name")+2*strlen(".")+1, sizeof(char*));
+               strcpy(paramsubname, ".");
+               strcat(paramsubname, nbinstance);
+               strcat(paramsubname, ".");
+               strcat(paramsubname, "name");
+               DBG("paramsubname is %s", paramsubname);
+
+               char* paramsubsize = (char*)calloc(strlen(nbinstance)+strlen("size")+2*strlen(".")+1, sizeof(char*));
+               strcpy(paramsubsize, ".");
+               strcat(paramsubsize, nbinstance);
+               strcat(paramsubsize, ".");
+               strcat(paramsubsize, "size");
+               DBG("paramsubsize is %s", paramsubsize);
+
+               DBG("file name is %s", dent->d_name);
+               char* cfilesize = DM_ENG_longToString(file_stats.st_size);
+               DBG("file size is %s", cfilesize);
+               (*pParamVal)[2*j] = DM_ENG_newParameterValueStruct(paramsubname, DM_ENG_ParameterType_UNDEFINED, dent->d_name);
+               (*pParamVal)[2*j+1] = DM_ENG_newParameterValueStruct(paramsubsize, DM_ENG_ParameterType_UNDEFINED, cfilesize);
+
+               j++;
+               free(nbinstance);
+               free(cfilesize);
+               free(pathname);
+               free(paramsubname);
+               free(paramsubsize);
+             }
+
+           }
+         }
+       }
+     closedir(dirp);
+     (*pParamVal)[2*nbParam] = NULL;
+     res = 0;
    }
    else
    {
@@ -919,7 +998,6 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
      *pNames = (char**)calloc(nbParam+1, sizeof(char*));
      int j;
      for (j=0; j<nbParam;j++){
-       lastInstanceNumber++;
        char* slastnb = DM_ENG_intToString(j+1);
        slastnb = realloc(slastnb, strlen(slastnb)+strlen(".")+1);
        strcat(slastnb, ".");
