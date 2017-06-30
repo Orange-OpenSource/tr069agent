@@ -5,13 +5,13 @@
  *
  * This software is distributed under the terms and conditions of the 'Apache-2.0'
  * license which can be found in the file 'LICENSE.txt' in this package distribution
- * or at 'http://www.apache.org/licenses/LICENSE-2.0'. 
+ * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
  * File        : DM_SystemCalls.c
  *
  * Created     : 22/05/2008
- * Author      : 
+ * Author      :
  *
  *---------------------------------------------------------------------------
  * $Id$
@@ -24,13 +24,14 @@
 /**
  * @file DM_SystemCalls
  *
- * @brief 
+ * @brief
  *
  **/
 
 #include "DM_SystemCalls.h"
 #include "DM_ENG_Error.h"
 #include "CMN_Trace.h"
+#include "DM_GlobalDefs.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -51,6 +52,66 @@ static const char* LOG_DIR = "/var/log/adm/";
 
 static struct sysinfo _info;
 static bool _infoLoaded = false;
+
+#define SERIAL_NUMBER_COMMAND "dmidecode -s system-serial-number" // Linux command to get the serial number
+#define SERIAL_NUMBER_MAX_LENGTH 30
+#define MACADDRESS_PATH_PREFIX "/home/JGBX5057/Documents/Orange-opensource/tr069agent-datamodel/"
+#define MACADDRESS_FILE "/address"
+
+static char *_get_serial_number(){
+   char *res;
+   char serial_number[SERIAL_NUMBER_MAX_LENGTH];
+   FILE *fp = popen(SERIAL_NUMBER_COMMAND, "r");
+
+   if(fp == NULL)
+   {
+      DBG("Unable to execute command %s", SERIAL_NUMBER_COMMAND);
+      return NULL;
+   }
+
+   if( fgets(serial_number, sizeof(serial_number), fp) != NULL)
+   {
+      /* writing content to stdout */
+      DBG("serial_number = %s",serial_number);
+   }
+   res = strdup(serial_number);
+
+   fclose(fp);
+   return res;
+}
+
+static char *_get_MACAddress(){
+   char *res;
+   FILE *fp;
+   char *macAddress;
+   char *address_file_path;
+
+   address_file_path = (char *) malloc(1 + strlen(MACADDRESS_PATH_PREFIX) + strlen(ETH_INTERFACE) + strlen(MACADDRESS_FILE) );
+   strcpy(address_file_path, MACADDRESS_PATH_PREFIX);
+   strcat(address_file_path, ETH_INTERFACE);
+   strcat(address_file_path, MACADDRESS_FILE);
+
+   fp = fopen(address_file_path, "r");
+   if(fp == NULL)
+   {
+      DBG("%s File open error", address_file_path);
+      return NULL;
+   }
+
+   macAddress = malloc(30 * sizeof(char));
+
+   if( fgets(macAddress, 18, fp) != NULL)
+   {
+            /* writing content to stdout */
+      DBG("macaddress = %s",macAddress);
+   }
+   res = strdup(macAddress);
+
+   free(macAddress);
+   free(address_file_path);
+   fclose(fp);
+   return res;
+}
 
 void DM_SystemCalls_reboot(bool factoryReset UNUSED)
 {
@@ -96,7 +157,7 @@ char* DM_SystemCalls_getIPAddress()
       else
       {
          DBG("Retrieving IP Address : %s", ipAddress);
-      }      
+      }
 #else
       struct ifaddrs *myaddrs = NULL, *ifa = NULL;
       struct sockaddr_in *s4 = NULL;
@@ -131,7 +192,7 @@ char* DM_SystemCalls_getIPAddress()
       else
       {
          DBG("Retrieving IP Address : %s", ipAddress);
-      }      
+      }
 
       freeifaddrs(myaddrs);
 #endif
@@ -174,6 +235,16 @@ char* DM_SystemCalls_getSystemData(const char* name, const char* data)
       if (!_infoLoaded) { _infoLoaded = (sysinfo(&_info) == 0); }
       if (_infoLoaded) { sVal = DM_ENG_longToString(_info.uptime); }
    }
+   else if (strcmp(name, LANDEVICE_1_HOSTS_HOST_1_MACADDRESS) == 0)
+   {
+      DBG("Searching for the MACAddress");
+      sVal = _get_MACAddress();
+   }
+   else if (strcmp(name, DEVICEINFO_SERIALNUMBER) == 0)
+   {
+      DBG("Searching for the Serial Number");
+      sVal = _get_serial_number();
+   }
    else if ((data != NULL) && (*data != '\0'))
    {
       sVal = _loadSystemResponse(data);
@@ -196,7 +267,7 @@ bool DM_SystemCalls_setSystemData(const char* name UNUSED, const char* value UNU
 
 /**
  * Performs a ping test.
- * 
+ *
  * @param host
  * @param numberOfRepetitions
  * @param timeout
@@ -229,7 +300,7 @@ int DM_SystemCalls_ping(char* host, int numberOfRepetitions, long timeout, unsig
    {
       char* token[4];
       int len = strlen(buf);
-      int c = 0; // index caractère
+      int c = 0; // index caractÃ¨re
       int i = 0; // index parametre
       char* rttPrefix = "rtt min/avg/max/mdev = ";
       if (strncmp(buf, rttPrefix, strlen(rttPrefix))==0)
@@ -262,7 +333,7 @@ int DM_SystemCalls_ping(char* host, int numberOfRepetitions, long timeout, unsig
 
 /**
  * Performs a traceroute test.
- * 
+ *
  * @param host
  * @param timeout
  * @param dataBlockSize
@@ -297,7 +368,7 @@ int DM_SystemCalls_traceroute(char* host, long timeout, int dataBlockSize, int m
       moy = 0;
       char* token[10];
       int len = strlen(buf);
-      int c = 0; // index caractère
+      int c = 0; // index caractÃ¨re
       int i = 0; // index parametre
       char* traceroutePrefix = "traceroute";
       if (strncmp(buf, traceroutePrefix, strlen(traceroutePrefix))==0) { continue; }
@@ -312,7 +383,7 @@ int DM_SystemCalls_traceroute(char* host, long timeout, int dataBlockSize, int m
       if (i<9) { continue; }
 
       double t1 = atof(token[3]); // ou strtod( token[3], &end );
-      if (t1 == 0) continue; // ds ce cas, token[3] n'est pas numérique (sinon nécessairement > 0) car pas de réponse de la gateway (token "*")
+      if (t1 == 0) continue; // ds ce cas, token[3] n'est pas numÃ©rique (sinon nÃ©cessairement > 0) car pas de rÃ©ponse de la gateway (token "*")
       double t2 = atof(token[5]);
       if (t2 == 0) continue;
       double t3 = atof(token[7]);
@@ -339,7 +410,7 @@ int DM_SystemCalls_traceroute(char* host, long timeout, int dataBlockSize, int m
 
 /**
  * Performs a file download.
- * 
+ *
  * @param fileType
  * @param url
  * @param username
@@ -354,7 +425,7 @@ int DM_SystemCalls_download(char* fileType, char* url, char* username, char* pas
    char buf[200];
    int  nType;
    char *pStrPath[] = { "/tmp/adm/", "/root/OpenSTB/browser/demo/mosaic/", "" };
-   
+
    // --> downloadExecDM_SystemCalls_download: type = '2' DM_SystemCalls_download: cmd = 'wget -o /var/log/adm/log.txt --ftp-user=cwmp --ftp-password=cwmp -O mosaic_jb.htm ftp://192.168.1.5/mosaic_jb.htm'
 
    nType = atoi( fileType );
@@ -382,6 +453,6 @@ int DM_SystemCalls_download(char* fileType, char* url, char* username, char* pas
    }
    printf( "\nDM_SystemCalls_download: cmd = '%s' ", buf );
    system( buf );
-   
+
    return 0;
 }

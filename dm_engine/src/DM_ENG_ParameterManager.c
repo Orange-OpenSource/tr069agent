@@ -708,10 +708,12 @@ static int _loadNames(const char* name, const char* data)
       int j;
       for (j = 0; paramNames[j] != NULL; j++)
       {
+         DBG("paramNames[%d] is %s", j, paramNames[j]);
          DM_ENG_Parameter* param = _getParameter(paramNames[j]);
          if (param != NULL) // sinon on laisse tomber
          {
             DM_ENG_Parameter_markLoaded(param, false);
+            DBG("loaded parameter is %s", paramNames[j]);
          }
       }
 
@@ -735,8 +737,8 @@ static int _loadFinal(DM_ENG_Parameter* param, bool withValues)
    if (!DM_ENG_Parameter_isLoaded(param, withValues) // sinon rien � faire
     && (strstr(name, "..") == 0)) // param n'est pas un proto (sinon rien � faire)
    {
-      DBG("into the loop");
       bool isNode = (name[strlen(name)-1] == '.');
+      DBG("withValues is %d", withValues);
       res = 1;
       if (withValues)
       {
@@ -765,7 +767,7 @@ static int _loadFinal(DM_ENG_Parameter* param, bool withValues)
             res = DM_ENG_ParameterManager_loadLeafParameterValue(param, false);
          }
       }
-      else if (isNode && ((param->loadingMode & 2)==2)) // si mode&2 == 0, il n'y a pas d'instanciation donc l'arborescence ne peut �tre modifi�e
+      else if (isNode && ((param->loadingMode & 1)==1)) // si mode&2 == 0, il n'y a pas d'instanciation donc l'arborescence ne peut �tre modifi�e
       {
          char* data = NULL;
          if ((param->definition != NULL) && (strlen(param->definition) != 0))
@@ -998,7 +1000,7 @@ static int _loadSystemParameter(DM_ENG_Parameter* param, char** pData)
 // si param == NULL, on parcourt tout le data model
 static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
 {
-   DBG("_loadSubParameters");
+   DBG("_loadSubParameters, param name is %s", param->name);
    int res = 0;
    if ((param==NULL) || (param->name[strlen(param->name)-1] == '.'))
    {
@@ -1026,10 +1028,11 @@ static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
                  && ((foundName == NULL) || ((strlen(prmName)<strlen(foundName)) && (strncmp(prmName, foundName, strlen(prmName))==0)))) // permet de converger vers l'objet racine du groupe qui n'est pas n�cessaire parcouru en 1er dans l'it�ration
                {
                   DM_ENG_Parameter* current = DM_ENG_ParameterData_getCurrent();
+                  DBG("prmName is %s", prmName);
                   if ((((current->loadingMode & 1) != 0) || (prmName[strlen(prmName)-1] != '.'))
                    && !DM_ENG_Parameter_isLoaded(current, withValues)
                    && (strstr(prmName, "..")==0))
-                  {
+                  { DBG("current parameter is %s", prmName);
 ///// solution non optimis�e /////
 //                     DM_ENG_FREE(foundName);
 //                     foundName = strdup(prmName);
@@ -1062,6 +1065,7 @@ static int _loadSubParameters(DM_ENG_Parameter* param, bool withValues)
                if (foundName == NULL) { foundName = foundComputedName; }
                else { DM_ENG_FREE(foundComputedName); }
             }
+            DBG("foundName is %s", foundName);
             trouve = (foundName != NULL);
             if (trouve)
             {
@@ -1364,6 +1368,7 @@ int DM_ENG_ParameterManager_setParameterValue(DM_ENG_EntityType entity, const ch
 
 int DM_ENG_ParameterManager_addObject(DM_ENG_EntityType entity, char* objectName, OUT unsigned int* pInstanceNumber, OUT DM_ENG_ParameterStatus* pStatus)
 {
+   DBG("DM_ENG_ParameterManager_addObject");
    DM_ENG_Parameter* param = DM_ENG_ParameterData_getParameter(objectName);
    if ((param == NULL) || !DM_ENG_Parameter_isNode(param->name)) return DM_ENG_INVALID_PARAMETER_NAME;
    if (!param->writable) return DM_ENG_REQUEST_DENIED;

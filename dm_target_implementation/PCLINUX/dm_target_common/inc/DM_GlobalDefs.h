@@ -46,6 +46,15 @@
 // Suppress the definition of DM_COM_CLOSE_ON_HTTP_200_ALLOWED to prohibit the session closure with HTTP 200
 #define DM_COM_CLOSE_ON_HTTP_200_ALLOWED
 
+
+///////////////
+// Datamodel //
+///////////////
+// Key to retreive datamodel parameter's full name for system parameters
+#define DEVICEINFO_SERIALNUMBER	            "DeviceInfo.SerialNumber"
+#define LANDEVICE_1_HOSTS_HOST_1_MACADDRESS "LANDevice.1.Hosts.Host.1.MACAddress"
+
+
 #define DM_TR106_MAXCONNECTIONREQUEST       DM_PREFIX "ManagementServer.X_ORANGE-COM_MaxConnectionRequest"
 #define DM_TR106_MAXCONNECTIONFREQ          DM_PREFIX "ManagementServer.X_ORANGE-COM_FreqConnectionRequest"
 // Key to retrieve the WAN Ip address from the datamodel.

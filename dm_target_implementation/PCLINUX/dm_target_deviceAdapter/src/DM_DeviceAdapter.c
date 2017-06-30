@@ -448,7 +448,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
 
       *pVal = strdup(DM_ENG_NONE_STATE);
 
-  } else if (0 == strncmp(paramNameStr, FileList_SHORT_NAME, strlen(FileList_SHORT_NAME))){
+  } /*else if (0 == strncmp(paramNameStr, FileList_SHORT_NAME, strlen(FileList_SHORT_NAME))){
     int instancenumber = _split_filelist_nbinstance(paramNameStr);
     char* nameorsize = NULL;
     _split_filelist_nameorsize(paramNameStr, &nameorsize);
@@ -491,7 +491,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       }
     }
     free(nameorsize);
-  } else {
+  } */else {
 
     // On recherche d'abord le param�tre dans DeviceInterfaceStubFile, fichier qui se place en coupure vis-�-vis de l'acc�s syst�me
     char * tmpStr = _retrieveValueFromInfoList(paramNameStr);
@@ -712,6 +712,8 @@ int DM_ENG_Device_performDiagnostics(const char* objName, DM_ENG_ParameterValueS
    return res;
 }
 
+static unsigned int init_filelist = 0;
+
 /**
  * Gets all the names and values of parameters of a sub-tree defined by the given object.
  *
@@ -771,19 +773,29 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
       free(sV1);
       free(sV2);
       res = 0;
-   }else if (strcmp(shortname, "loadingMode1.")==0){
-     int nbParam = 4;
+   }
+   else if (strcmp(shortname, "loadingMode1.")==0){
+     int nbParam = 2;
      *pParamVal = (DM_ENG_ParameterValueStruct**)calloc(nbParam+1, sizeof(DM_ENG_ParameterValueStruct*));
      (*pParamVal)[0] = DM_ENG_newParameterValueStruct(".1.name", DM_ENG_ParameterType_UNDEFINED, "name1");
      (*pParamVal)[1] = DM_ENG_newParameterValueStruct(".1.size", DM_ENG_ParameterType_UNDEFINED, "121");
-     (*pParamVal)[2] = DM_ENG_newParameterValueStruct(".2.name", DM_ENG_ParameterType_UNDEFINED, "name2");
-     (*pParamVal)[3] = DM_ENG_newParameterValueStruct(".2.size", DM_ENG_ParameterType_UNDEFINED, "122");
+     (*pParamVal)[2] = NULL;
+     res = 0;
+
+   }
+   else if (strcmp(shortname, "loadingMode2.")==0){
+     int nbParam = 4;
+     *pParamVal = (DM_ENG_ParameterValueStruct**)calloc(nbParam+1, sizeof(DM_ENG_ParameterValueStruct*));
+     (*pParamVal)[0] = DM_ENG_newParameterValueStruct(".1.name", DM_ENG_ParameterType_UNDEFINED, "name2");
+     (*pParamVal)[1] = DM_ENG_newParameterValueStruct(".1.size", DM_ENG_ParameterType_UNDEFINED, "122");
+     (*pParamVal)[2] = DM_ENG_newParameterValueStruct(".2.name", DM_ENG_ParameterType_UNDEFINED, "name3");
+     (*pParamVal)[3] = DM_ENG_newParameterValueStruct(".2.size", DM_ENG_ParameterType_UNDEFINED, "123");
      (*pParamVal)[4] = NULL;
      res = 0;
    }
-
    else if (strcmp(shortname, FileList_SHORT_NAME)==0)
    {
+     if (init_filelist == 0) {
      int nbParam = 0;
      DIR *dirp;
      struct dirent *dent;
@@ -843,7 +855,13 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
      closedir(dirp);
      (*pParamVal)[2*nbParam] = NULL;
      res = 0;
+     init_filelist++;
+   } else {
+
+     init_filelist++;
+     res = 0;
    }
+ }
    else
    {
       char* endData = NULL;
