@@ -306,48 +306,6 @@ static bool _splitSourceAndData(const char* data, OUT int* pSrc,OUT char** pEndD
    return true;
 }
 
-/**
- * @brief split an instance of FiliList to find the instance number
- * @param parameterName Name of instance, exemple: FileList.1.name
- * @return Return thee found instance number, exemple: 1
- */
- static int _split_filelist_nbinstance(char* parameterName) {
-   char* paramcopy = NULL;
- 	paramcopy = strdup(parameterName);
- 	int nb_instance = 0;
- 	char *token = strtok(paramcopy, ".");
- 	token = strtok(NULL, ".");
-
- 	if (token == NULL) {
- 		nb_instance = -1;
- 	} else {
- 		nb_instance = atoi(token);
- 	}
-   //DBG("instance number is %d\n", nb_instance);
-   free(paramcopy);
- 	return nb_instance;
- }
-
- /**
-  * @brief split a FileList parameter to find whether name or size
-  * @param parameterName Name of instance, exemple: FileList.1.name
-  * @param result exemple: name
-  * @return Return 0
-  */
- static int _split_filelist_nameorsize(char* parameterName, char** result) {
-  char* paramcopy = NULL;
-	paramcopy = strdup(parameterName);
-	char* token = strtok(paramcopy, ".");
-	token = strtok(NULL, ".");
-  token = strtok(NULL, ".");
-
-	if (token != NULL) {
-		*result = strdup(token);
-    //DBG("parameter is %s\n", *result);
-	}
-  free(paramcopy);
-	return 0;
-}
 
 /**
  * @brief Gets the parameter value from system level.
@@ -773,7 +731,7 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
       free(sV1);
       free(sV2);
       res = 0;
-   }
+   } // this is test code. delete it after test
    else if (strcmp(shortname, "loadingMode1.")==0){
      int nbParam = 2;
      *pParamVal = (DM_ENG_ParameterValueStruct**)calloc(nbParam+1, sizeof(DM_ENG_ParameterValueStruct*));
@@ -792,7 +750,7 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
      (*pParamVal)[3] = DM_ENG_newParameterValueStruct(".2.size", DM_ENG_ParameterType_UNDEFINED, "123");
      (*pParamVal)[4] = NULL;
      res = 0;
-   }
+   } // end of test code
    else if (strcmp(shortname, FileList_SHORT_NAME)==0)
    {
      if (init_filelist == 0) {
@@ -950,6 +908,48 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
    return res;
 }
 
+static bool _checkFileParameterExist(char* filename, char* objectName){
+
+  bool exist = false;
+  char* prmName;
+  DM_ENG_Parameter* param;
+  size_t pathLen = strlen(objectName);
+  for (prmName = DM_ENG_ParameterManager_getFirstParameterName(); prmName!=NULL; prmName = DM_ENG_ParameterManager_getNextParameterName())
+  {
+    if (((pathLen==0) || (strncmp(prmName, objectName, pathLen)==0)) && (strstr(prmName, "..")==NULL))
+    {
+      char* dotAfter = strchr(prmName+pathLen, '.');
+      if ((strlen(prmName) > pathLen) && (dotAfter!=NULL) && (dotAfter[1]!='\0')){
+        if (strcmp(dotAfter, ".name") == 0){
+          param = DM_ENG_ParameterManager_getCurrentParameter();
+          if (param->value != NULL){
+            if (strcmp(filename, param->value) == 0){
+                exist = true;
+                break;
+            }
+          }
+        }
+      }
+    }
+  }
+  DBG("parameter for %s exists in data model? => %s\n", filename, exist? "YES":"NO");
+  return exist;
+}
+
+static int _addFileParameterInstance(char* filename, char* objectName, unsigned int* pInstanceNumber){
+    DM_ENG_Parameter* param = DM_ENG_ParameterData_getParameter(objectName);
+    if ((param == NULL) || !DM_ENG_Parameter_isNode(param->name)) return DM_ENG_INVALID_PARAMETER_NAME;
+    if (!param->writable) return DM_ENG_REQUEST_DENIED;
+
+    if (param->storageMode == DM_ENG_StorageMode_DM_ONLY)
+    {
+       if ((unsigned int)param->minValue >= INT_MAX) return DM_ENG_RESOURCES_EXCEEDED;
+       param->minValue++;
+       *pInstanceNumber = (unsigned int)param->minValue;
+     }
+     return 0;
+}
+
 /**
  * Gets all the names of parameters of a sub-tree defined by the given object.
  *
@@ -981,7 +981,7 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
       (*pNames)[5] = strdup(".7.Value");
       (*pNames)[6] = NULL;
       res = 0;
-   }
+   } /*Test code. Delete after test */
    else if (strcmp(shortname, "loadingMode1.")==0){
      int nbParam = 2;
      *pNames = (char**)calloc(nbParam+1, sizeof(char*));
@@ -989,32 +989,38 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
      (*pNames)[1] = strdup(".2.");
      (*pNames)[2] = NULL;
      res = 0;
-   }
+   }/*End of test code*/
    else if (strcmp(shortname, FileList_SHORT_NAME)==0)
    {
-     int nbParam = 0;
      DIR *dirp;
      struct dirent *dent;
+
+     int nbParam = 0;
+     unsigned int nInstanceNumber	= 0;
+     *pNames = (char**)calloc(nbParam+1, sizeof(char*));
 
      dirp=opendir(FileList_PATH);
      while ((dent=readdir(dirp)) != NULL){
        if (dent){
            if (dent->d_type == DT_REG) {
-             nbParam++;
+             bool exist = _checkFileParameterExist(dent->d_name, objName);
+             if (!exist) {
+               int res = _addFileParameterInstance(dent->d_name, objName, &nInstanceNumber);
+               if (res ==0) {
+                 char* cInstanceNumber = DM_ENG_uintToString(nInstanceNumber);
+                 cInstanceNumber = realloc(cInstanceNumber, strlen(cInstanceNumber)+strlen(".")+1);
+                 strcat(cInstanceNumber, ".");
+                 (*pNames)[nbParam] = strdup(cInstanceNumber);
+                 free(cInstanceNumber);
+                 nbParam++;
+                 *pNames = (char**)realloc(*pNames, (nbParam+1)*sizeof(char*));
+               }
+             }
            }
          }
        }
      closedir(dirp);
 
-     *pNames = (char**)calloc(nbParam+1, sizeof(char*));
-     int j;
-     for (j=0; j<nbParam;j++){
-       char* slastnb = DM_ENG_intToString(j+1);
-       slastnb = realloc(slastnb, strlen(slastnb)+strlen(".")+1);
-       strcat(slastnb, ".");
-       (*pNames)[j] = strdup(slastnb);
-       free(slastnb);
-     }
      (*pNames)[nbParam] = NULL;
      res = 0;
    }
