@@ -167,8 +167,9 @@ static void * _uploadThread(void *data);                           /* Perform up
 static const char* _extractParameterName(const char* parameterFullPath); /* Used to remove the device type tag from the parameter name */
 static int    _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[]);
 static int    _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[]);
-static int    _split_filelist_nbinstance(char* parameterName);
-static int    _split_filelist_nameorsize(char* parameterName, char** result);
+static bool _checkFileParameterExist(char* filename, char* objectName);
+static int _addFileParameterInstance(char* filename, char* objectName, unsigned int* pInstanceNumber);
+static char* _getFileParameterInstance(char* filename, char* objectName);
 
 #ifndef _WithoutUI_
 static void * _deviceInterfaceSimulationThread(void* data);        /* Used to simulate the Parameter Set Value and DM_ENGINE value change notification */
@@ -910,6 +911,7 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
 
 static bool _checkFileParameterExist(char* filename, char* objectName){
 
+  DBG("_checkFileParameterExist");
   bool exist = false;
   char* prmName;
   DM_ENG_Parameter* param;
@@ -922,17 +924,22 @@ static bool _checkFileParameterExist(char* filename, char* objectName){
       if ((strlen(prmName) > pathLen) && (dotAfter!=NULL) && (dotAfter[1]!='\0')){
         if (strcmp(dotAfter, ".name") == 0){
           param = DM_ENG_ParameterManager_getCurrentParameter();
-          if (param->value != NULL){
-            if (strcmp(filename, param->value) == 0){
+          char* pValue = NULL;
+          DM_ENG_ParameterManager_getParameterValue(prmName, &pValue);
+          if (pValue != NULL){
+            if (strcmp(filename, pValue) == 0){
+                DBG("parameter value is %s", pValue);
                 exist = true;
                 break;
-            }
+                }
+          } else {
+            DBG("parameter value is NULL");
           }
         }
       }
     }
   }
-  DBG("parameter for %s exists in data model? => %s\n", filename, exist? "YES":"NO");
+  DBG("parameter for %s %s Exist in data model", filename, exist? "":"NOT");
   return exist;
 }
 
@@ -946,8 +953,43 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
        if ((unsigned int)param->minValue >= INT_MAX) return DM_ENG_RESOURCES_EXCEEDED;
        param->minValue++;
        *pInstanceNumber = (unsigned int)param->minValue;
+       DBG("minValue is %u", param->minValue);
      }
      return 0;
+}
+
+static char* _getFileParameterInstance(char* filename, char* objectName){
+
+  char* prmName;
+  DM_ENG_Parameter* param;
+  size_t pathLen = strlen(objectName);
+  for (prmName = DM_ENG_ParameterManager_getFirstParameterName(); prmName!=NULL; prmName = DM_ENG_ParameterManager_getNextParameterName())
+  {
+    if (((pathLen==0) || (strncmp(prmName, objectName, pathLen)==0)) && (strstr(prmName, "..")==NULL))
+    {
+      char* dotAfter = strchr(prmName+pathLen, '.');
+      if ((strlen(prmName) > pathLen) && (dotAfter!=NULL) && (dotAfter[1]!='\0')){
+        if (strcmp(dotAfter, ".name") == 0){
+          param = DM_ENG_ParameterManager_getCurrentParameter();
+          char* pValue = NULL;
+          DM_ENG_ParameterManager_getParameterValue(prmName, &pValue);
+          if (pValue != NULL){
+            DBG("Get parameter value success");
+            if (strcmp(filename, pValue) == 0){
+                char* instanceAfter = strchr(prmName+pathLen-1, '.');
+                char cinstancenumber = instanceAfter[1];
+                char* instancenumber = malloc(2*sizeof(char));
+                if(instancenumber == NULL) return NULL;
+                instancenumber[0] = cinstancenumber;
+                instancenumber[1] = '\0';
+                return instancenumber;
+            }
+          }
+        }
+      }
+    }
+  }
+  return NULL;
 }
 
 /**
@@ -1008,6 +1050,7 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
                int res = _addFileParameterInstance(dent->d_name, objName, &nInstanceNumber);
                if (res ==0) {
                  char* cInstanceNumber = DM_ENG_uintToString(nInstanceNumber);
+                 DBG("cInstanceNumber is %s", cInstanceNumber);
                  cInstanceNumber = realloc(cInstanceNumber, strlen(cInstanceNumber)+strlen(".")+1);
                  strcat(cInstanceNumber, ".");
                  (*pNames)[nbParam] = strdup(cInstanceNumber);
@@ -1015,10 +1058,22 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
                  nbParam++;
                  *pNames = (char**)realloc(*pNames, (nbParam+1)*sizeof(char*));
                }
-             }
-           }
-         }
-       }
+             } else {
+                char* instancenumber = _getFileParameterInstance(dent->d_name, objName);
+                if (instancenumber != NULL) {
+                  char* fileinstance = malloc(strlen(instancenumber)+strlen(".")+1);
+                  strcpy(fileinstance, instancenumber);
+                  strcat(fileinstance, ".");
+                  (*pNames)[nbParam] = strdup(fileinstance);
+                  free(fileinstance);
+                  free(instancenumber);
+                  nbParam++;
+                  *pNames = (char**)realloc(*pNames, (nbParam+1)*sizeof(char*));
+                  }
+                }
+              }
+            }
+          }
      closedir(dirp);
 
      (*pNames)[nbParam] = NULL;
