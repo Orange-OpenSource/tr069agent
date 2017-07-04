@@ -713,7 +713,6 @@ int DM_ENG_Device_performDiagnostics(const char* objName, DM_ENG_ParameterValueS
    return res;
 }
 
-static unsigned int init_filelist = 0;
 
 /**
  * Gets all the names and values of parameters of a sub-tree defined by the given object.
@@ -796,7 +795,7 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
    } // end of test code
    else if (strcmp(shortname, FileList_SHORT_NAME)==0)
    {
-     if (init_filelist == 0) {
+
      int nbParam = 0;
      DIR *dirp;
      struct dirent *dent;
@@ -856,12 +855,6 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
      closedir(dirp);
      (*pParamVal)[2*nbParam] = NULL;
      res = 0;
-     init_filelist++;
-   } else {
-
-     init_filelist++;
-     res = 0;
-   }
  }
    else
    {
