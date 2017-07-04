@@ -307,6 +307,48 @@ static bool _splitSourceAndData(const char* data, OUT int* pSrc,OUT char** pEndD
    return true;
 }
 
+/**
+ * @brief split an instance of FiliList to find the instance number
+ * @param parameterName Name of instance, exemple: FileList.1.name
+ * @return Return thee found instance number, exemple: 1
+ */
+ static int _split_filelist_nbinstance(char* parameterName) {
+   char* paramcopy = NULL;
+ 	paramcopy = strdup(parameterName);
+ 	int nb_instance = 0;
+ 	char *token = strtok(paramcopy, ".");
+ 	token = strtok(NULL, ".");
+
+ 	if (token == NULL) {
+ 		nb_instance = -1;
+ 	} else {
+ 		nb_instance = atoi(token);
+ 	}
+   //DBG("instance number is %d\n", nb_instance);
+   free(paramcopy);
+ 	return nb_instance;
+ }
+
+ /**
+  * @brief split a FileList parameter to find whether name or size
+  * @param parameterName Name of instance, exemple: FileList.1.name
+  * @param result exemple: name
+  * @return Return 0
+  */
+ static int _split_filelist_nameorsize(char* parameterName, char** result) {
+  char* paramcopy = NULL;
+	paramcopy = strdup(parameterName);
+	char* token = strtok(paramcopy, ".");
+	token = strtok(NULL, ".");
+  token = strtok(NULL, ".");
+
+	if (token != NULL) {
+		*result = strdup(token);
+    //DBG("parameter is %s\n", *result);
+	}
+  free(paramcopy);
+	return 0;
+}
 
 /**
  * @brief Gets the parameter value from system level.
@@ -407,7 +449,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
 
       *pVal = strdup(DM_ENG_NONE_STATE);
 
-  } /*else if (0 == strncmp(paramNameStr, FileList_SHORT_NAME, strlen(FileList_SHORT_NAME))){
+  } else if (0 == strncmp(paramNameStr, FileList_SHORT_NAME, strlen(FileList_SHORT_NAME))){
     int instancenumber = _split_filelist_nbinstance(paramNameStr);
     char* nameorsize = NULL;
     _split_filelist_nameorsize(paramNameStr, &nameorsize);
@@ -450,7 +492,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       }
     }
     free(nameorsize);
-  } */else {
+  } else {
 
     // On recherche d'abord le param�tre dans DeviceInterfaceStubFile, fichier qui se place en coupure vis-�-vis de l'acc�s syst�me
     char * tmpStr = _retrieveValueFromInfoList(paramNameStr);
