@@ -167,7 +167,7 @@ static void * _uploadThread(void *data);                           /* Perform up
 static const char* _extractParameterName(const char* parameterFullPath); /* Used to remove the device type tag from the parameter name */
 static int    _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[]);
 static int    _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[]);
-static bool _checkFileParameterExist(char* filename, char* objectName);
+static bool _FileParameterExist(char* filename, char* objectName);
 static int _addFileParameterInstance(char* filename, char* objectName, unsigned int* pInstanceNumber);
 static char* _getFileParameterInstance(char* filename, char* objectName);
 
@@ -451,10 +451,10 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       *pVal = strdup(DM_ENG_NONE_STATE);
 
   } else if (0 == strncmp(paramNameStr, FileList_SHORT_NAME, strlen(FileList_SHORT_NAME))){
+
     int instancenumber = _split_filelist_nbinstance(paramNameStr);
     char* nameorsize = NULL;
     _split_filelist_nameorsize(paramNameStr, &nameorsize);
-    //DBG("%s\n", nameorsize);
     int nbfile = 0;
     DIR *dirp;
     struct dirent *dent;
@@ -464,6 +464,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
     if (dent){
       if (dent->d_type == DT_REG){
         nbfile++;
+        // !!!!!!!!!!!!!!!!!!!!! problem here
         if (nbfile == instancenumber) {
 
           if (0 == strcmp(nameorsize,"name")){
@@ -480,13 +481,16 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
             strcpy(pathname, FileList_PATH);
             strcat(pathname, dent->d_name);
             if (!stat(pathname, &file_stats)){
-              char* csize = DM_ENG_longToString(file_stats.st_size);
-              strSize = strlen(csize) + 1;
-              *pVal = (char*)malloc(strSize);
-              memset((void *) *pVal, 0x00, strSize);
-              strcpy(*pVal, csize);
-              free(csize);
+
+                  char* csize = DM_ENG_longToString(file_stats.st_size);
+                  strSize = strlen(csize) + 1;
+                  *pVal = (char*)malloc(strSize);
+                  memset((void *) *pVal, 0x00, strSize);
+                  strcpy(*pVal, csize);
+                  free(csize);
+
               }
+              free(pathname);
             }
           }
         }
@@ -945,26 +949,28 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
    return res;
 }
 
-static bool _checkFileParameterExist(char* filename, char* objectName){
+static bool _FileParameterExist(char* systemfilename, char* objectName){
 
-  DBG("_checkFileParameterExist");
+  DBG("Check correspondant FileParameter Exist, filename is %s", systemfilename);
   bool exist = false;
   char* prmName;
   DM_ENG_Parameter* param;
   size_t pathLen = strlen(objectName);
   for (prmName = DM_ENG_ParameterManager_getFirstParameterName(); prmName!=NULL; prmName = DM_ENG_ParameterManager_getNextParameterName())
   {
-    if (((pathLen==0) || (strncmp(prmName, objectName, pathLen)==0)) && (strstr(prmName, "..")==NULL))
+    if ((strncmp(prmName, objectName, pathLen)==0) && (strstr(prmName, "..")==NULL))
     {
       char* dotAfter = strchr(prmName+pathLen, '.');
       if ((strlen(prmName) > pathLen) && (dotAfter!=NULL) && (dotAfter[1]!='\0')){
         if (strcmp(dotAfter, ".name") == 0){
           param = DM_ENG_ParameterManager_getCurrentParameter();
-          char* pValue = NULL;
-          DM_ENG_ParameterManager_getParameterValue(prmName, &pValue);
-          if (pValue != NULL){
-            if (strcmp(filename, pValue) == 0){
-                DBG("parameter value is %s", pValue);
+          char* parameterfilename = NULL;
+          // proble here !!!!!!!!! It needs to read parameter value without using DM_ENG_Device_getValue
+          // possible solution: read value from parameter.data~
+          DM_ENG_ParameterManager_getParameterValue(prmName, &parameterfilename );
+          if (parameterfilename  != NULL){
+            if (strcmp(systemfilename, parameterfilename ) == 0){
+                DBG("parameter value is %s", parameterfilename );
                 exist = true;
                 break;
                 }
@@ -975,7 +981,7 @@ static bool _checkFileParameterExist(char* filename, char* objectName){
       }
     }
   }
-  DBG("parameter for %s %s Exist in data model", filename, exist? "":"NOT");
+  DBG("parameter for %s %s Exist in data model", systemfilename, exist? "":"NOT");
   return exist;
 }
 
@@ -994,7 +1000,7 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
      return 0;
 }
 
-static char* _getFileParameterInstance(char* filename, char* objectName){
+static char* _getFileParameterInstance(char* systemfilename , char* objectName){
 
   char* prmName;
   DM_ENG_Parameter* param;
@@ -1007,11 +1013,11 @@ static char* _getFileParameterInstance(char* filename, char* objectName){
       if ((strlen(prmName) > pathLen) && (dotAfter!=NULL) && (dotAfter[1]!='\0')){
         if (strcmp(dotAfter, ".name") == 0){
           param = DM_ENG_ParameterManager_getCurrentParameter();
-          char* pValue = NULL;
-          DM_ENG_ParameterManager_getParameterValue(prmName, &pValue);
-          if (pValue != NULL){
+          char* parameterfilename  = NULL;
+          DM_ENG_ParameterManager_getParameterValue(prmName, &parameterfilename );
+          if (parameterfilename  != NULL){
             DBG("Get parameter value success");
-            if (strcmp(filename, pValue) == 0){
+            if (strcmp(systemfilename , parameterfilename ) == 0){
                 char* instanceAfter = strchr(prmName+pathLen-1, '.');
                 char cinstancenumber = instanceAfter[1];
                 char* instancenumber = malloc(2*sizeof(char));
@@ -1081,7 +1087,7 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
      while ((dent=readdir(dirp)) != NULL){
        if (dent){
            if (dent->d_type == DT_REG) {
-             bool exist = _checkFileParameterExist(dent->d_name, objName);
+             bool exist = _FileParameterExist(dent->d_name, objName);
              if (!exist) {
                int res = _addFileParameterInstance(dent->d_name, objName, &nInstanceNumber);
                if (res ==0) {
