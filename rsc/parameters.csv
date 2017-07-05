@@ -36,7 +36,7 @@ ManagementServer.PeriodicInformEnable;BOOLEAN;0;1;1;2;0;0;;1;0;0
 ManagementServer.PeriodicInformInterval;UINT;0;1;1;2;0;0;;3600;0;0
 ManagementServer.PeriodicInformTime;DATE;0;1;0;0;0;0;;;0;0
 ManagementServer.ConnectionRequestURL;STRING;1;0;0;0;1;0;;;0;0
-ManagementServer.ConnectionRequestUsername;STRING;2;1;1;0;0;0;;;0;0
+ManagementServer.ConnectionRequestUsername;STRING;3;1;1;0;0;0;;;0;0;;;DeviceInfo.ManufacturerOUI ++ %22-%22 ++ DeviceInfo.ProductClass ++ %22-%22 ++ DeviceInfo.SerialNumber
 ManagementServer.ConnectionRequestPassword;STRING;2;1;1;0;0;0;;;0;0
 ManagementServer.X_ORANGE-COM_MaxConnectionRequest;UINT;0;1;1;2;0;0;;50;0;0
 ManagementServer.X_ORANGE-COM_FreqConnectionRequest;UINT;0;1;1;2;0;0;;3600;0;0
@@ -70,7 +70,7 @@ LANDevice.1.;ANY;0;0;0;0;0;0;;;0;0
 LANDevice.1.Hosts.;ANY;0;0;0;0;0;0;;;0;0
 LANDevice.1.Hosts.Host.;ANY;0;0;0;0;0;0;;;0;0
 LANDevice.1.Hosts.Host.1.;ANY;0;0;0;0;0;0;;;0;0
-LANDevice.1.Hosts.Host.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+LANDevice.1.Hosts.Host.1.MACAddress;STRING;2;0;0;0;0;0;;;0;0;;;%22more /sys/class/net/eth0/address%22
 
 LAN.;ANY;0;1;1;0;0;0;;;0;0
 LAN.DHCPOption.;ANY;1;1;1;0;0;0;;;2;0

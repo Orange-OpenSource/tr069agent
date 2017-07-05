@@ -377,34 +377,35 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
 
   DBG("Parameter Name to Retrieve: %s", paramNameStr);
 
-  if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestUsername")) {
-    DBG("BUILD ConnectionRequestUsername");
-
-    // Build the connection request UserName OUI-ProductClass-SerialNumber
-    ouiStr          = _retrieveValueFromInfoList("DeviceInfo.ManufacturerOUI");
-    productClassStr = _retrieveValueFromInfoList("DeviceInfo.ProductClass");
-    serialNumberStr = _retrieveValueFromInfoList("DeviceInfo.SerialNumber");
-    /*Test code */
-    /* if _retrieveValueFromInfoList(SerialNumber) not success, try DM_SystemCalls_getSystemData(SerialNumber)*/
-    if (NULL == serialNumberStr) {
-      serialNumberStr = DM_SystemCalls_getSystemData("DeviceInfo.SerialNumber", NULL);
-    }
-    // Check value
-    if((NULL == ouiStr) || (NULL == productClassStr) || (NULL == serialNumberStr)) {
-      // ERROR
-    } else {
-      strSize = strlen(ouiStr) + strlen(productClassStr) + strlen(serialNumberStr) + 4;
-      *pVal = (char*)malloc(strSize);
-      memset((void *) *pVal, 0x00, strSize);
-      strcpy(*pVal, ouiStr);
-      strcat(*pVal, "-");
-      strcat(*pVal, productClassStr);
-      strcat(*pVal, "-");
-      strcat(*pVal, serialNumberStr);
-
-    }
-
-  } else if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestURL")) {
+//  if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestUsername")) {
+//    DBG("BUILD ConnectionRequestUsername");
+//
+//    // Build the connection request UserName OUI-ProductClass-SerialNumber
+//    ouiStr          = _retrieveValueFromInfoList("DeviceInfo.ManufacturerOUI");
+//    productClassStr = _retrieveValueFromInfoList("DeviceInfo.ProductClass");
+//    serialNumberStr = _retrieveValueFromInfoList("DeviceInfo.SerialNumber");
+//    /*Test code */
+//    /* if _retrieveValueFromInfoList(SerialNumber) not success, try DM_SystemCalls_getSystemData(SerialNumber)*/
+//    if (NULL == serialNumberStr) {
+//      serialNumberStr = DM_SystemCalls_getSystemData("DeviceInfo.SerialNumber", NULL);
+//    }
+//    // Check value
+//    if((NULL == ouiStr) || (NULL == productClassStr) || (NULL == serialNumberStr)) {
+//      // ERROR
+//    } else {
+//      strSize = strlen(ouiStr) + strlen(productClassStr) + strlen(serialNumberStr) + 4;
+//      *pVal = (char*)malloc(strSize);
+//      memset((void *) *pVal, 0x00, strSize);
+//      strcpy(*pVal, ouiStr);
+//      strcat(*pVal, "-");
+//      strcat(*pVal, productClassStr);
+//      strcat(*pVal, "-");
+//      strcat(*pVal, serialNumberStr);
+//
+//    }
+//
+//  } else 
+  if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestURL")) {
     DBG("BUILD ConnectionRequestURL");
 
     // Build the Connection Request URL http://IPAddress:50805/16random

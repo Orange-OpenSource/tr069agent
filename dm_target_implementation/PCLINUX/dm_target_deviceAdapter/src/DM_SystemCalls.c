@@ -235,11 +235,11 @@ char* DM_SystemCalls_getSystemData(const char* name, const char* data)
       if (!_infoLoaded) { _infoLoaded = (sysinfo(&_info) == 0); }
       if (_infoLoaded) { sVal = DM_ENG_longToString(_info.uptime); }
    }
-   else if (strcmp(name, LANDEVICE_1_HOSTS_HOST_1_MACADDRESS) == 0)
-   {
-      DBG("Searching for the MACAddress");
-      sVal = _get_MACAddress();
-   }
+//   else if (strcmp(name, LANDEVICE_1_HOSTS_HOST_1_MACADDRESS) == 0)
+//   {
+//      DBG("Searching for the MACAddress");
+//      sVal = _get_MACAddress();
+//   }
    else if (strcmp(name, DEVICEINFO_SERIALNUMBER) == 0)
    {
       DBG("Searching for the Serial Number");
@@ -247,6 +247,7 @@ char* DM_SystemCalls_getSystemData(const char* name, const char* data)
    }
    else if ((data != NULL) && (*data != '\0'))
    {
+      DBG("---->  Calling system command %s\n", data);
       sVal = _loadSystemResponse(data);
    }
 #endif
