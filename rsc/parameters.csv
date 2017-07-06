@@ -8,7 +8,7 @@
 # NOTIFICATION        --> 0 No Notification, 1 Passive, 2 Active
 # MANDATORY_NOTIF     --> 0 No, 1 Yes
 # NOTIFICATION_DENIED --> 0 No, 1 Yes
-# ACCESS_LIST         --> 
+# ACCESS_LIST         -->
 # DEFAULT_VALUE       --> The Default value
 #
 ;ANY;0;0;0;0;0;0;;;0;0
@@ -24,7 +24,10 @@ DeviceInfo.ProvisioningCode;STRING;1;1;1;1;1;0;;;0;0
 DeviceInfo.DeviceStatus;STRING;2;1;0;0;0;0;;;0;0
 DeviceInfo.SpecVersion;STRING;1;0;0;0;1;0;;1.1;0;0
 ManagementServer.;ANY;0;0;0;0;0;0;;;0;0
-ManagementServer.URL;STRING;0;1;1;2;0;0;;http://my.acs.url/tr69;0;0
+ManagementServer.URL;STRING;0;1;1;2;0;0;;http://g-acsdev.rd.francetelecom.fr:8080/nbbsora/tr69;0;0
+#ManagementServer.URL;STRING;0;1;1;2;0;0;;http://g-acsrd.orange-labs.fr:8080/edge/tr69;0;0
+#ManagementServer.URL;STRING;0;1;1;2;0;0;;http://tink-device.kmt.orange.com/CWMPInterface/proxyServlet/;0;0
+#ManagementServer.URL;STRING;0;1;1;2;0;0;;http://tink-device.kermit.itn.intraorange/CWMPInterface/proxyServlet/;0;0
 ManagementServer.Username;STRING;0;1;1;2;0;0;;;0;0
 ManagementServer.Password;STRING;0;1;1;2;0;0;;;0;0
 ManagementServer.ParameterKey;STRING;0;1;1;2;1;0;;;0;0
@@ -37,27 +40,33 @@ ManagementServer.ConnectionRequestPassword;STRING;2;1;1;0;0;0;;;0;0
 ManagementServer.X_ORANGE-COM_MaxConnectionRequest;UINT;0;1;1;2;0;0;;50;0;0
 ManagementServer.X_ORANGE-COM_FreqConnectionRequest;UINT;0;1;1;2;0;0;;3600;0;0
 ManagementServer.X_ORANGE-COM_WIFIComm.Active;BOOLEAN;2;1;0;0;0;0;;0;0;0
-WANDevice.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANIPConnection.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress;STRING;2;0;0;2;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Name;STRING;2;0;0;2;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Username;STRING;1;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress;STRING;2;0;0;2;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Name;STRING;2;0;0;2;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username;STRING;1;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANDSLLinkConfig.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANConnectionDevice.1.WANDSLLinkConfig.LinkType;STRING;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANDSLInterfaceConfig.;ANY;0;0;0;0;0;0;;;0;0
-WANDevice.1.WANDSLInterfaceConfig.UpstreamNoiseMargin;INT;0;0;0;0;0;1;;;0;0
-WANDevice.1.WANDSLInterfaceConfig.DownstreamNoiseMargin;INT;0;0;0;0;0;1;;;0;0
-WANDevice.1.WANDSLInterfaceConfig.UpstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
-WANDevice.1.WANDSLInterfaceConfig.DownstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
-WANDevice.1.WANDSLInterfaceConfig.UpstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
-WANDevice.1.WANDSLInterfaceConfig.DownstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
-LANDevice.1.Hosts.Host.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+#WANDevice.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANIPConnection.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress;STRING;2;0;0;2;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Name;STRING;2;0;0;2;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.Username;STRING;1;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress;STRING;2;0;0;2;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Name;STRING;2;0;0;2;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username;STRING;1;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANDSLLinkConfig.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANConnectionDevice.1.WANDSLLinkConfig.LinkType;STRING;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANDSLInterfaceConfig.;ANY;0;0;0;0;0;0;;;0;0
+#WANDevice.1.WANDSLInterfaceConfig.UpstreamNoiseMargin;INT;0;0;0;0;0;1;;;0;0
+#WANDevice.1.WANDSLInterfaceConfig.DownstreamNoiseMargin;INT;0;0;0;0;0;1;;;0;0
+#WANDevice.1.WANDSLInterfaceConfig.UpstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
+#WANDevice.1.WANDSLInterfaceConfig.DownstreamAttenuation;INT;0;0;0;0;0;1;;;0;0
+#WANDevice.1.WANDSLInterfaceConfig.UpstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
+#WANDevice.1.WANDSLInterfaceConfig.DownstreamCurrRate;UINT;0;0;0;0;0;1;;;0;0
+#LANDevice.1.Hosts.Host.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+#LANDevice.1.Hosts.Host.1.MACAddress;STRING;1;0;0;0;0;0;;;0;0
+
+FileList.;ANY;0;1;1;2;0;0;;;0;0
+FileList.1.;ANY;0;1;1;2;0;0;;;0;0
+FileList.1.name;STRING;2;1;1;2;0;0;;name;0;0
+FileList.1.size;STRING;2;1;1;2;0;0;;11;0;0

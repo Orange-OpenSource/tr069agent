@@ -5,13 +5,13 @@
  *
  * This software is distributed under the terms and conditions of the 'Apache-2.0'
  * license which can be found in the file 'LICENSE.txt' in this package distribution
- * or at 'http://www.apache.org/licenses/LICENSE-2.0'. 
+ * or at 'http://www.apache.org/licenses/LICENSE-2.0'.
  *
  *---------------------------------------------------------------------------
  * File        : DM_DeviceAdapter.c
  *
  * Created     : 22/05/2008
- * Author      : 
+ * Author      :
  *
  *---------------------------------------------------------------------------
  * $Id$
@@ -26,7 +26,7 @@
  *
  * This file implements routine declared into DM_ENG_Device.h header.
  *
- * @brief 
+ * @brief
  *
  **/
 
@@ -107,7 +107,7 @@ extern char * g_randomCpeUrl;
 #define TargetFileName "TargetFileName" // Target File Name to store the downloaded file (defined into DeviceInterfaceFile)
 // Default Target File Name (if not provided in the download request or in the DeviceInterfaceStubFile);
 #define DefaultTargetFileName "/tmp/cwmpGetFile"
- 
+
 #define FileNameToUpload "FileNameToUpload" //  File Name to upload (defined into DeviceInterfaceFile)
 // Default Upload File Name (if not provided in the in the DeviceInterfaceStubFile)
 #define DefaultFileNameToUpload "./parameters.csv"
@@ -121,7 +121,7 @@ static DM_CMN_Mutex_t _systemDataMutex = NULL;
 static volatile bool _ready = false;
 
 static bool _downloadCompletedSuccessfully = false; // Flag to indicate if the NextSoftwareVersion must be used.
-#define NextSoftwareVersion    "NextSoftwareVersionAfterDownloadSuccess" // Software version to use after a successful download 
+#define NextSoftwareVersion    "NextSoftwareVersionAfterDownloadSuccess" // Software version to use after a successful download
 #define X_OUI_INFORM           "X_OUI_INFORM"   // To retrieve the OUI to send when an X Event Inform is requested by the end user
 #define X_EVENT_INFORM         "X_EVENT_INFORM" // To retrieve the EVENT to send when an X Event Inform is requested by the end user
 #define DEFAULT_X_OUI_INFORM   "001349"         // Default value to use when no value is retrieved
@@ -176,7 +176,7 @@ static bool      _downloadThreadInProgress = false; // Indicate if a download th
 
 /**
  * Performs the necessary initializations of the device adapter if any, when starting the DM Agent.
- */ 
+ */
 void DM_ENG_Device_init()
 {
    DBG("Call to DM_ENG_Device_init");
@@ -196,7 +196,7 @@ void DM_ENG_Device_init()
 
 /**
  * Performs the necessary operations when stopping the DM Agent.
- */ 
+ */
 void DM_ENG_Device_release()
 {
    DBG("Call to DM_ENG_Device_release");
@@ -242,13 +242,13 @@ static void _transferUnlock()
 
 /**
  * Notify the Device Adapter of the beginning of a session with the ACS. It allows to perform the necessary initializations.
- */ 
+ */
 void DM_ENG_Device_openSession() {
   DBG("Call to DM_ENG_Device_openSession");
 
   if ((_deviceInterfaceStubFileMutex == NULL) || (_mutexDownloadThread == NULL)) return; // ressource non disponible
 
-  _transferLock(); // exlusion mutuelle avec les téléchargements (pas obligatoire. A adapter à l'implémentation des download et upload)
+  _transferLock(); // exlusion mutuelle avec les tï¿½lï¿½chargements (pas obligatoire. A adapter ï¿½ l'implï¿½mentation des download et upload)
 
   // Buil the info list (info list is build from the DeviceInterfaceStubFile file) and lock the mutex
   _buildInfoList();
@@ -258,7 +258,7 @@ void DM_ENG_Device_openSession() {
 
 /**
  * Notify the Device Adapter of the end of the session with the ACS.
- */ 
+ */
 void DM_ENG_Device_closeSession() {
   DBG("Call to DM_ENG_Device_closeSession");
 
@@ -308,8 +308,8 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
   char * serialNumberStr = NULL;
   int    strSize = 0;
   char * nextSoftwareVersionStr = NULL;
- 
-  // Set default *pVal  
+
+  // Set default *pVal
   *pVal = NULL;
   if(NULL == paramNameStr) {
     EXEC_ERROR("Invalid Parameter Name");
@@ -340,7 +340,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       strcat(*pVal, serialNumberStr);
 
     }
-   
+
   } else if(0 == strcmp(paramNameStr, "ManagementServer.ConnectionRequestURL")) {
     DBG("BUILD ConnectionRequestURL");
 
@@ -356,7 +356,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       char* sCpePort = DM_ENG_intToString(CPE_PORT);
       strSize = strlen("http://") + strlen(ipAddressStr) + strlen(sCpePort) + 20;
       *pVal = (char*)malloc(strSize);
-      memset((void *) *pVal, 0x00, strSize);  
+      memset((void *) *pVal, 0x00, strSize);
       strcpy(*pVal,  "http://");
       strcat(*pVal, ipAddressStr);
       strcat(*pVal, ":");
@@ -366,7 +366,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
       free(sCpePort);
     }
 
-  } else if((0    == strcmp(paramNameStr, "DeviceInfo.SoftwareVersion")) && 
+  } else if((0    == strcmp(paramNameStr, "DeviceInfo.SoftwareVersion")) &&
             (true == _downloadCompletedSuccessfully)) {
       // The FW File is downloaded. Send the next software version for TEST purpose.
       DBG("Next software Version\n");
@@ -388,7 +388,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
 
   } else {
 
-    // On recherche d'abord le paramètre dans DeviceInterfaceStubFile, fichier qui se place en coupure vis-à-vis de l'accès système
+    // On recherche d'abord le paramï¿½tre dans DeviceInterfaceStubFile, fichier qui se place en coupure vis-ï¿½-vis de l'accï¿½s systï¿½me
     char * tmpStr = _retrieveValueFromInfoList(paramNameStr);
 
     if (tmpStr != NULL)
@@ -452,9 +452,9 @@ int DM_ENG_Device_setValues(DM_ENG_SystemParameterValueStruct* parameterList[])
 
   // Compute the Array Size
   while (parameterList[size] != NULL) { size++; }
-  
+
   // Perform Array parameter checking
-   for (i=0; i<size; i++) {  
+   for (i=0; i<size; i++) {
      if(NULL == parameterList[i]->parameterName) {
        EXEC_ERROR("Invalid Array Parameter Name");
        return DM_ENG_INVALID_PARAMETER_NAME;
@@ -468,7 +468,7 @@ int DM_ENG_Device_setValues(DM_ENG_SystemParameterValueStruct* parameterList[])
   // Retrieve the current values to be able to set back values in case of error.
   backValueStr = (char**)calloc(size+1, sizeof(char*));
 
-   for (i=0; i<size; i++) { 
+   for (i=0; i<size; i++) {
      // Retrieve the current value
      if(0 != DM_ENG_Device_getValue(parameterList[i]->parameterName, parameterList[i]->systemData, &backValueStr[i])) {
        // Error while retrieving back value
@@ -507,7 +507,7 @@ int DM_ENG_Device_setValues(DM_ENG_SystemParameterValueStruct* parameterList[])
   for (i=0; i<size; i++) {
     // Retrieve all the current value.
     DM_ENG_FREE(backValueStr[i]);
-  }   
+  }
    DM_ENG_FREE(backValueStr);
 
    // Compute the return code
@@ -571,29 +571,29 @@ int DM_ENG_Device_deleteObject(const char* objName, unsigned int instanceNumber)
 
 /**
  * Commands the device to reboot.
- * 
- * @param factoryReset Indicates if or not the device must perform à factory reset.
+ *
+ * @param factoryReset Indicates if or not the device must perform ï¿½ factory reset.
  */
 void DM_ENG_Device_reboot(bool factoryReset)
 {
   WARN("REBOOT IMPLEMENTED");
   DM_SystemCalls_reboot(factoryReset);
   return;
-  
+
 }
 
 /**
  * Commands the device to perform diagnostics (ping test, traceroute, ...).
- * 
+ *
  * @param objName Name of the TR-069 object refering to the diagnostics ("Xxx...ZzzDiagnostics.")
  * @param paramList Parameter list of the arguments
  * @param pResult Pointer to the result if it is provided synchronously
- * 
+ *
  * @return 0 if the diagnostics is carried out synchronously, 1 if asynchronously, else an error code (9001, ..) as specified in TR-069
  */
 int DM_ENG_Device_performDiagnostics(const char* objName, DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[])
 {
-   int res = 9003; // Diagnostic non supporté
+   int res = 9003; // Diagnostic non supportï¿½
 
    if (strcmp(objName, DM_ENG_LAN_IP_PING_DIAG_OBJECT_NAME) == 0)
    {
@@ -608,10 +608,10 @@ int DM_ENG_Device_performDiagnostics(const char* objName, DM_ENG_ParameterValueS
 
 /**
  * Gets all the names and values of parameters of a sub-tree defined by the given object.
- * 
+ *
  * @param objName Name of an object
- * @param pParamVal Pointer to a null terminated array of DM_ENG_ParameterValueStruct* which returns the couples <name, value> 
- * 
+ * @param pParamVal Pointer to a null terminated array of DM_ENG_ParameterValueStruct* which returns the couples <name, value>
+ *
  * @return 0 if OK, else an error code (9001, ..) as specified in TR-069
  */
 int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_ParameterValueStruct** pParamVal[])
@@ -636,7 +636,7 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
       (*pParamVal)[6] = NULL;
       res = 0;
    }
-   else if ((strcmp(shortname, "LAN.Stats.")==0) && (data == NULL)) // on utilise cette version bouchonnée seulement si data == NULL
+   else if ((strcmp(shortname, "LAN.Stats.")==0) && (data == NULL)) // on utilise cette version bouchonnï¿½e seulement si data == NULL
    {
       time_t currentTime;
       time(&currentTime);
@@ -755,10 +755,10 @@ int DM_ENG_Device_getObject(const char* objName, const char* data, OUT DM_ENG_Pa
 
 /**
  * Gets all the names of parameters of a sub-tree defined by the given object.
- * 
+ *
  * @param objName Name of an object
  * @param pParamVal Pointer to a null terminated array of char* which gives the names
- * 
+ *
  * @return 0 if OK, else an error code (9001, ..) as specified in TR-069
  */
 int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNames[])
@@ -863,7 +863,7 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
 
 /**
  * Commands the device to download a file.
- * 
+ *
  * @param fileType A string as defined in TR-069
  * @param url URL specifying the source file location
  * @param username Username to be used by the CPE to authenticate with the file server
@@ -873,7 +873,7 @@ int DM_ENG_Device_getNames(const char* objName, const char* data, OUT char** pNa
  * @param successURL URL the CPE may redirect the user's browser to if the download completes successfully
  * @param failureURL URL the CPE may redirect the user's browser to if the download does not complete successfully
  * @param transferId An integer that uniquely identifies the transfer request in the queue of transfers
- * 
+ *
  * @return 0 if the download is carried out synchronously, 1 if asynchronously, else an error code (9001, ..) as specified in TR-069
  */
 int DM_ENG_Device_download(char* fileType, char* url, char* username, char* password, unsigned int fileSize, char* targetFileName,
@@ -883,7 +883,7 @@ int DM_ENG_Device_download(char* fileType, char* url, char* username, char* pass
 
    DM_ENG_TransferRequest* data = DM_ENG_newTransferRequest(true, 2, 0, fileType, url, username, password, fileSize, targetFileName, successURL, failureURL, NULL, NULL);
    data->transferId = transferId;
-  
+
    /* Start a thread to perform the download and notify once completed */
    DM_CMN_ThreadId_t download_Thread_ID = 0;
    DM_CMN_Thread_create(_downloadThread, data, false, &download_Thread_ID);
@@ -893,19 +893,19 @@ int DM_ENG_Device_download(char* fileType, char* url, char* username, char* pass
 
 /**
  * Commands the device to upload a file.
- * 
+ *
  * @param fileType A string as defined in TR-069
  * @param url URL specifying the destination file location
  * @param username Username to be used by the CPE to authenticate with the file server
  * @param password Password to be used by the CPE to authenticate with the file server
  * @param transferId An integer that uniquely identifies the transfer request in the queue of transfers
- * 
+ *
  * @return 0 if the upload id carried out synchronously, 1 if asynchronously, else an error code (9001, ..) as specified in TR-069
  */
 int DM_ENG_Device_upload(char* fileType, char* url, char* username, char* password, unsigned int transferId)
 {
    WARN("UPLOAD REQUEST");
-  
+
    DM_ENG_TransferRequest* data = DM_ENG_newTransferRequest(false, 2, 0, fileType, url, username, password, 0, NULL, NULL, NULL, NULL, NULL);
    data->transferId = transferId;
 
@@ -934,7 +934,7 @@ static int _getStringName(char* linePtr, char** nameStr, char** contStr)
 {
   if((NULL == linePtr) || (NULL == nameStr)) {
      EXEC_ERROR("Invalid Parameters");
-     return -1;  
+     return -1;
   }
 
   *nameStr = NULL;
@@ -947,7 +947,7 @@ static int _getStringName(char* linePtr, char** nameStr, char** contStr)
 
   if (*linePtr == '\0') {
      EXEC_ERROR("Invalid Parameters");
-     return -1;  
+     return -1;
   }
 
   // Compute the string name size
@@ -959,7 +959,7 @@ static int _getStringName(char* linePtr, char** nameStr, char** contStr)
   int stringNameSize = _linePtr - linePtr;
   if (stringNameSize == 0) {
      EXEC_ERROR("Parameter Name Missing");
-     return -1;  
+     return -1;
   }
 
   *nameStr = (char*)malloc(stringNameSize+1);
@@ -976,7 +976,7 @@ static int _getStringValue(char* linePtr, char** valueStr)
 {
   if((NULL == linePtr) || (NULL == valueStr)) {
      EXEC_ERROR("Invalid Parameters");
-     return -1;  
+     return -1;
   }
 
   // Init *valueStr
@@ -989,12 +989,12 @@ static int _getStringValue(char* linePtr, char** valueStr)
 
   if (*linePtr == '\0') {
      EXEC_ERROR("Parameter Value Missing");
-     return -1;  
+     return -1;
   }
 
   if (*linePtr != '"') {
      EXEC_ERROR("Invalid Parameter Value");
-     return -1;  
+     return -1;
   }
 
   char* _linePtr = ++linePtr;
@@ -1016,7 +1016,7 @@ static int _getStringValue(char* linePtr, char** valueStr)
   *valueStr = val;
 
   val = DM_ENG_decodeValue(*valueStr);
-  if (val != NULL) // il y avait des car spéciaux dans la chaîne
+  if (val != NULL) // il y avait des car spï¿½ciaux dans la chaï¿½ne
   {
      free(*valueStr);
      *valueStr = val;
@@ -1031,11 +1031,11 @@ static char* _retrieveValueFromInfoList(const char* nameStr)
 {
   infoStructType * nextInfoPtr    = NULL;
   infoStructType * currentInfoPtr = NULL;
-  
+
   if(NULL == nameStr) {
     return NULL;
   }
-  
+
   if(NULL == rootInfoElementPtr) return NULL;
 
   currentInfoPtr = rootInfoElementPtr;
@@ -1044,7 +1044,7 @@ static char* _retrieveValueFromInfoList(const char* nameStr)
     if(false == _isCommentLine(currentInfoPtr->paramNameStr)) {
       if(0 == strcmp(nameStr, currentInfoPtr->paramNameStr)) {
           return  (currentInfoPtr->paramValueStr);
-      } 
+      }
     }
     currentInfoPtr = nextInfoPtr;
   } while(NULL != currentInfoPtr);
@@ -1056,13 +1056,13 @@ static bool _setValueToInfoList(const char* nameStr, char* valueStr)
 {
   infoStructType * nextInfoPtr    = NULL;
   infoStructType * currentInfoPtr = NULL;
-  
+
   if(NULL == nameStr) {
     return false;
   }
-  
+
   if(NULL == rootInfoElementPtr) return false;
-  
+
   currentInfoPtr = rootInfoElementPtr;
   do{
     nextInfoPtr = currentInfoPtr->next;
@@ -1070,7 +1070,7 @@ static bool _setValueToInfoList(const char* nameStr, char* valueStr)
    if(NULL != currentInfoPtr->paramValueStr) free(currentInfoPtr->paramValueStr);
    currentInfoPtr->paramValueStr = strdup(valueStr);
    return true;
-    } 
+    }
     currentInfoPtr = nextInfoPtr;
   } while(NULL != currentInfoPtr);
   return false;
@@ -1080,10 +1080,10 @@ static int _freeInfoList()
 {
   infoStructType * nextInfoPtr    = NULL;
   infoStructType * currentInfoPtr = NULL;
-  
-  
+
+
   if(NULL == rootInfoElementPtr) return true;
-  
+
   currentInfoPtr = rootInfoElementPtr;
   do{
     nextInfoPtr = currentInfoPtr->next;
@@ -1092,14 +1092,14 @@ static int _freeInfoList()
     free(currentInfoPtr);
     currentInfoPtr = nextInfoPtr;
   } while(NULL != currentInfoPtr);
-  
-    
+
+
   lastInfoElementPtr = NULL;
   rootInfoElementPtr = NULL;
-  
+
   // Unlock the mutex
   DM_CMN_Thread_unlockMutex(_deviceInterfaceStubFileMutex);
-  
+
   return true;
 }
 
@@ -1110,37 +1110,37 @@ static int _buildInfoList()
   char             line[_DEVICE_LINE_MAX];
   char           * valueStr = NULL;
   char           * nameStr  = NULL;
-  char           * contStr  = NULL;  
-  
+  char           * contStr  = NULL;
+
   // Build the Device Inetrface Path/file
   if(NULL != DATA_PATH) {
     strcpy(INTERFACE_PATH_FILE, DATA_PATH);
     strcat(INTERFACE_PATH_FILE, "/");
     strcat(INTERFACE_PATH_FILE, INTERFACE_FILE);
   }
- 
+
   // Take the mutex (the mutex is unlocked on _freeInfoList call).
   DM_CMN_Thread_lockMutex(_deviceInterfaceStubFileMutex);
-    
+
   // Make sure the list is not already built.
   if(NULL != rootInfoElementPtr) {
     return 0;
   }
-   
+
   /* Ouverture du fichier en lecture */
   P_FICHIER = fopen(INTERFACE_PATH_FILE, "r");
-  
+
   if(NULL == P_FICHIER) {
     EXEC_ERROR("No file");
     return -1;
   }
-  
+
   /* Fin du fichier atteint ? */
   while (fgets(line, _DEVICE_LINE_MAX, P_FICHIER) != NULL) {
-    nameStr  = NULL; 
+    nameStr  = NULL;
     valueStr = NULL;
     if(false == _isCommentLine(line)) {
-      if(0 != _getStringName(line, &nameStr, &contStr)) {    
+      if(0 != _getStringName(line, &nameStr, &contStr)) {
         EXEC_ERROR("Invalid String for Name");
          nameStr = strdup("# INVALID NAME");
       }
@@ -1150,10 +1150,12 @@ static int _buildInfoList()
     } else {
       nameStr = strdup(line);
     }
-      
+
     infoPtr = (infoStructType *) malloc(sizeof(infoStructType ));
     infoPtr->paramNameStr  = nameStr;
+    DBG("_buildInfoList, build paramNameStr is %s", nameStr);
     infoPtr->paramValueStr = valueStr;
+    DBG("_buildInfoList, build paramNameStr value is %s", valueStr);
     infoPtr->next          = NULL;
     if(NULL == rootInfoElementPtr) {
       // First element
@@ -1166,10 +1168,10 @@ static int _buildInfoList()
     }
 
   }  // end while
-  
+
   /* Fermeture du fichier !!! A ne surtout pas oublier !!!*/
-  fclose(P_FICHIER); 
-  
+  fclose(P_FICHIER);
+
   return true;
 }
 
@@ -1180,22 +1182,22 @@ static int _saveInfoList()
   int              lineStrSize = 0;
   infoStructType * nextInfoPtr    = NULL;
   infoStructType * currentInfoPtr = NULL;
-  
+
   // Build the Device Inetrface Path/file
   if(NULL != DATA_PATH) {
     strcpy(INTERFACE_PATH_FILE, DATA_PATH);
     strcat(INTERFACE_PATH_FILE, "/");
     strcat(INTERFACE_PATH_FILE, INTERFACE_FILE);
   }
-    
+
   /* Ouverture du fichier en lecture */
   remove(INTERFACE_PATH_FILE);
-  
+
   /* Ouverture du fichier en ecriture */
   P_FICHIER = fopen(INTERFACE_PATH_FILE, "w+");
-  
+
   if(NULL == rootInfoElementPtr) return true;
-  
+
   currentInfoPtr = rootInfoElementPtr;
   do{
     nextInfoPtr = currentInfoPtr->next;
@@ -1225,7 +1227,7 @@ static int _saveInfoList()
       lineStr=NULL;
     }
 
-  } while(NULL != currentInfoPtr);  
+  } while(NULL != currentInfoPtr);
 
   /* Fermeture du fichier !!! A ne surtout pas oublier !!!*/
   fclose(P_FICHIER);
@@ -1234,8 +1236,8 @@ static int _saveInfoList()
 
 /**
  * @brief Private routine used to retrieve the parameter name from a given full path
- *  
- * @param parameterFullPath The full path where to look for the parameter name 
+ *
+ * @param parameterFullPath The full path where to look for the parameter name
  *
  * @return Returns a char* with the short parameter name.
  */
@@ -1258,17 +1260,17 @@ static void *_downloadThread(void *data)
   _transferLock();
 
   httpGetFileDataPtr = (httpGetFileDataType * ) malloc(sizeof(httpGetFileDataType));
-  
+
   httpGetFileDataPtr->fileURLStr            = strdup(dr->url);
   httpGetFileDataPtr->filSize               = dr->fileSize;
-  
+
   if(NULL != dr->targetFileName) {
-    httpGetFileDataPtr->targetFileNameStr = strdup(dr->targetFileName); 
+    httpGetFileDataPtr->targetFileNameStr = strdup(dr->targetFileName);
   } else {
     // No Target File Name. Check into DeviceInterfaceStubFile file if the default target name is specified.
     // Build the Info List from the DeviceInterfaceStubFile (and lock the mutex)
     _buildInfoList();
-      
+
     // Retrieve the value
     tmpStr   = _retrieveValueFromInfoList(TargetFileName);
     if(NULL == tmpStr) {
@@ -1276,16 +1278,16 @@ static void *_downloadThread(void *data)
     }
 
     DBG("Download Target File Name = %s", DefaultTargetFileName);
-    
+
     // Set the Target File Name value.
     int tmpStrSize = strlen(tmpStr) + 1;
-    httpGetFileDataPtr->targetFileNameStr = (char *) malloc(tmpStrSize); 
+    httpGetFileDataPtr->targetFileNameStr = (char *) malloc(tmpStrSize);
     memset((void *) httpGetFileDataPtr->targetFileNameStr, '\0', tmpStrSize);
     sprintf(httpGetFileDataPtr->targetFileNameStr, "%s", tmpStr);
-    
+
      // Free the Info List (and unlock the mutex)
-     _freeInfoList(); 
-    
+     _freeInfoList();
+
   }
 
   if(NULL != dr->username) {
@@ -1297,49 +1299,49 @@ static void *_downloadThread(void *data)
     httpGetFileDataPtr->passwordStr = strdup(dr->password);
   } else {
     httpGetFileDataPtr->passwordStr = NULL;
-  } 
-  
+  }
+
   time(&startTime);
-  
+
   rc = DM_HttpGetFile(httpGetFileDataPtr);
-  
+
   time(&endTime);
-  
+
   // Free memory
   DM_ENG_FREE(httpGetFileDataPtr->fileURLStr);
   DM_ENG_FREE(httpGetFileDataPtr->targetFileNameStr);
   DM_ENG_FREE(httpGetFileDataPtr->usernameStr);
   DM_ENG_FREE(httpGetFileDataPtr->passwordStr);
   DM_ENG_FREE(httpGetFileDataPtr);
-   
-  
+
+
   // Transfer Complete Notification is done by DM_HttpGetFile
   if( 0 == rc ) {
     // Set the download flag to true.
     bool initialDownloadCompletedSuccessfully = _downloadCompletedSuccessfully;
     _downloadCompletedSuccessfully = true;
     DBG("Download completed with success");
-    
+
     if(false == initialDownloadCompletedSuccessfully) {
       // Software upgrade simulation
       // Notify the DM_ENGINE
-      
+
       char* softwareVersionStr = (char *) malloc(strlen(DM_PREFIX) + strlen("DeviceInfo.SoftwareVersion") + 1);
       strcpy(softwareVersionStr, DM_PREFIX);
       strcat(softwareVersionStr, "DeviceInfo.SoftwareVersion");
       INFO("Notify Software Version Change - %s", softwareVersionStr);
       DM_ENG_ParameterManager_dataValueChanged(softwareVersionStr);
-      
+
       // Free allocated memory
       free(softwareVersionStr);
     }
   } else {
     DBG("Download completed with ERROR");
   }
-  
+
   // Notify the DM_Engine
   DM_ENG_ParameterManager_transferComplete(dr->transferId, rc, startTime, endTime);
-  
+
   DM_ENG_deleteTransferRequest( dr );
 
   // End of download sequence
@@ -1364,16 +1366,16 @@ static void *_uploadThread(void *data)
 
   httpPutFileDataPtr = (httpPutFileDataType * ) malloc(sizeof(httpPutFileDataType));
   memset((void *) httpPutFileDataPtr, 0x00, sizeof(httpPutFileDataType));
-  
+
   // Destination URL
   httpPutFileDataPtr->destURLStr  = ((NULL != dr->url) ? strdup(dr->url) : NULL);
-  
+
   // Username
   httpPutFileDataPtr->usernameStr = ((NULL != dr->username) ? strdup(dr->username) : NULL);
-  
+
   // Password
   httpPutFileDataPtr->passwordStr = ((NULL != dr->password) ? strdup(dr->password) : NULL);
-   
+
   // Local File Name - Computed thanks to the File Type
   // Try to retrieve the name of the file to download from the DeviceInterfaceStubFile
   // Build the Info List from the DeviceInterfaceStubFile (and take the mutex)
@@ -1385,16 +1387,16 @@ static void *_uploadThread(void *data)
   }
   httpPutFileDataPtr->localFileNameStr = strdup(tmpStr);
   // Free the Info List (and unlock the mutex)
-  _freeInfoList(); 
-  
+  _freeInfoList();
+
   time(&startTime);
-  
+
   if(NULL == httpPutFileDataPtr->destURLStr) {
     // No URL
     rc = DM_ENG_UPLOAD_FAILURE;
   } else {
     DBG("********* destURLStr = %s ***********", httpPutFileDataPtr->destURLStr);
-  
+
     if(0 == strncasecmp(httpPutFileDataPtr->destURLStr, "http", sizeof("http") - 1 )) {
       DBG("HTTP Type URL");
       rc = DM_HttpPutFile(httpPutFileDataPtr);
@@ -1406,28 +1408,28 @@ static void *_uploadThread(void *data)
       rc = DM_ENG_UNSUPPORTED_PROTOCOL;
     }
   }
-  
+
   time(&endTime);
-  
+
   // Free memory
   DM_ENG_FREE(httpPutFileDataPtr->destURLStr);
   DM_ENG_FREE(httpPutFileDataPtr->usernameStr);
   DM_ENG_FREE(httpPutFileDataPtr->passwordStr);
   DM_ENG_FREE(httpPutFileDataPtr->localFileNameStr);
   DM_ENG_FREE(httpPutFileDataPtr);
-  
+
   // Transfer Complete Notofication is done by DM_HttpGetFile
   if( 0 == rc ) {
     DBG("Upload completed with success");
   } else {
     DBG("Upload completed with ERROR");
   }
-  
+
   // Notify the DM_Engine
   DM_ENG_ParameterManager_transferComplete(dr->transferId, rc, startTime, endTime);
-  
+
   DM_ENG_deleteTransferRequest( dr );
-  
+
   DBG("_uploadThread - End");
   _transferUnlock();
 
@@ -1457,17 +1459,17 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
   char * tmpStr = NULL;
   char   x_oui_Str[MAX_PARAMETER_NAME_VALUE_SIZE];
   char   x_event_Str[MAX_PARAMETER_NAME_VALUE_SIZE];
-   
+
   printf("Enter your choice: \n");
   printf("  Quit application               --> 0\n");
   printf("  Notify Parameter Value Change  --> 1\n");
-  printf("  Send End User Request Inform   --> 2\n"); 
-  printf("  Send a Request Download        --> 3\n"); 
-    
+  printf("  Send End User Request Inform   --> 2\n");
+  printf("  Send a Request Download        --> 3\n");
+
   while((action = getchar()) != '0')
-  {  
+  {
     _flush();
- 
+
     switch (action)
     {
        case '1':
@@ -1487,7 +1489,7 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
 
            printf("Parameter Value: ");
            memset((void *) tmp, 0x00, MAX_PARAMETER_NAME_VALUE_SIZE);
-           fgets(tmp, MAX_PARAMETER_NAME_VALUE_SIZE - 1, stdin); 
+           fgets(tmp, MAX_PARAMETER_NAME_VALUE_SIZE - 1, stdin);
            // Remove the '\n' at the end
            for (i = 0; (tmp[i] != '\n') && (i < MAX_PARAMETER_NAME_VALUE_SIZE); i++)
            {
@@ -1499,7 +1501,7 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
               printf("Invalid Parameter\n");
            }
            else
-           { 
+           {
               // Build the Info List from the DeviceInterfaceStubFile (and lock the mutex)
               _buildInfoList();
 
@@ -1507,9 +1509,9 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
               _setValue(parameterName, parameterValue);
 
               // Free the Info List (and unlock the mutex)
-              _freeInfoList(); 
+              _freeInfoList();
 
-              // Notify the DM_ENGINE     
+              // Notify the DM_ENGINE
               DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
               //DM_ENG_ParameterManager_dataValueChanged(parameterName);
            }
@@ -1518,7 +1520,7 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
 
        case '2':
        {
-          DBG("Request to send a End User Requested Inform"); 
+          DBG("Request to send a End User Requested Inform");
 
           // Build the Info List from the DeviceInterfaceStubFile (and take the mutex)
           _buildInfoList();
@@ -1544,7 +1546,7 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
           DBG("X EVENT = %s", x_event_Str);
 
           // Free the Info List (and unlock the mutex)
-          _freeInfoList(); 
+          _freeInfoList();
 
           DM_ENG_ParameterManager_vendorSpecificEvent(x_oui_Str, x_event_Str);
        }
@@ -1552,7 +1554,7 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
 
        case '3':
        {
-          DBG("Request to send a Request Download"); 
+          DBG("Request to send a Request Download");
 
           DM_ENG_ArgStruct* args[4];
           args[0] = DM_ENG_newArgStruct("aa0", "v0");
@@ -1590,8 +1592,8 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
     printf("Enter your choice: \n");
     printf("  Quit application               --> 0\n");
     printf("  Notify Parameter Value Change  --> 1\n");
-    printf("  Send End User Request Inform   --> 2\n"); 
-    printf("  Send a Request Download        --> 3\n"); 
+    printf("  Send End User Request Inform   --> 2\n");
+    printf("  Send a Request Download        --> 3\n");
     DM_CMN_Thread_sleep(3);
   }
 
@@ -1619,7 +1621,7 @@ static int _setValue(const char* name, char* val)
 {
    bool res = false;
   const char* paramNameStr = _extractParameterName(name); // Parameter Name without the Device Type Tag
-  
+
    if((paramNameStr != NULL) && (val != NULL))
    {
       // Traiter ci-dessous les cas particuliers
@@ -1645,7 +1647,7 @@ static int _setValue(const char* name, char* val)
 
 static int _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[])
 {
-   int res = 1; // par défaut, résultat asynchrone
+   int res = 1; // par dï¿½faut, rï¿½sultat asynchrone
 
    char* host = NULL;
    int numberOfRepetitions = 4;
@@ -1653,7 +1655,7 @@ static int _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Parame
    int dataSize = 56;
    int dscp = 0;
    int i;
-   for (i=0; paramList[i] != NULL; i++) // on récupère les valeurs qui peuvent être dans le désordre
+   for (i=0; paramList[i] != NULL; i++) // on rï¿½cupï¿½re les valeurs qui peuvent ï¿½tre dans le dï¿½sordre
    {
       if (strcmp(paramList[i]->parameterName, DM_ENG_LAN_IP_PING_HOST_NAME)==0)
       {
@@ -1679,12 +1681,12 @@ static int _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Parame
 
    if (host == NULL) // sinon on laisse tomber le test
    {
-      // DiagnosticsState positionné à "Error_Internal"
+      // DiagnosticsState positionnï¿½ ï¿½ "Error_Internal"
       *pResult = DM_ENG_newTabParameterValueStruct(1);
       (*pResult)[0] = DM_ENG_newParameterValueStruct(DM_ENG_LAN_IP_PING_DIAG_STATE_NAME, DM_ENG_ParameterType_UNDEFINED, DM_ENG_ERROR_INTERNAL_STATE);
       (*pResult)[1] =NULL;
 
-      res = 0; // résultat fourni de façon synchrone
+      res = 0; // rï¿½sultat fourni de faï¿½on synchrone
    }
    else
    {
@@ -1695,12 +1697,12 @@ static int _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Parame
 
       if (!foundHost)
       {
-         // DiagnosticsState positionné à "Error_CannotResolveHostName"
+         // DiagnosticsState positionnï¿½ ï¿½ "Error_CannotResolveHostName"
          *pResult = DM_ENG_newTabParameterValueStruct(1);
          (*pResult)[0] = DM_ENG_newParameterValueStruct(DM_ENG_LAN_IP_PING_DIAG_STATE_NAME, DM_ENG_ParameterType_UNDEFINED, DM_ENG_ERROR_CANNOT_RESOLVE_STATE);
          (*pResult)[1] =NULL;
 
-         res = 0; // résultat fourni de façon synchrone
+         res = 0; // rï¿½sultat fourni de faï¿½on synchrone
       }
       else
       {
@@ -1724,7 +1726,7 @@ static int _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Parame
          free(str);
          (*pResult)[6] = NULL;
 
-         res = 0; // résultat fourni de façon synchrone
+         res = 0; // rï¿½sultat fourni de faï¿½on synchrone
       }
    }
 
@@ -1733,14 +1735,14 @@ static int _pingTest(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Parame
 
 static int _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_ParameterValueStruct** pResult[])
 {
-   int res = 1; // par défaut, résultat asynchrone
+   int res = 1; // par dï¿½faut, rï¿½sultat asynchrone
 
    char* host = NULL;
    long timeout = 5000;
    int dataBlockSize = 40;
    int maxHopCount = 30;
    int i;
-   for (i=0; paramList[i] != NULL; i++) // on récupère les valeurs qui peuvent être dans le désordre
+   for (i=0; paramList[i] != NULL; i++) // on rï¿½cupï¿½re les valeurs qui peuvent ï¿½tre dans le dï¿½sordre
    {
       if (strcmp(paramList[i]->parameterName, DM_ENG_LAN_TRACEROUTE_HOST_NAME)==0)
       {
@@ -1762,12 +1764,12 @@ static int _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Para
 
    if (host == NULL) // sinon on laisse tomber le test
    {
-      // DiagnosticsState positionné à "Error_Internal"
+      // DiagnosticsState positionnï¿½ ï¿½ "Error_Internal"
       *pResult = DM_ENG_newTabParameterValueStruct(1);
       (*pResult)[0] = DM_ENG_newParameterValueStruct(DM_ENG_LAN_TRACEROUTE_DIAG_STATE_NAME, DM_ENG_ParameterType_UNDEFINED, DM_ENG_ERROR_INTERNAL_STATE);
       (*pResult)[1] =NULL;
 
-      res = 0; // résultat fourni de façon synchrone
+      res = 0; // rï¿½sultat fourni de faï¿½on synchrone
    }
    else
    {
@@ -1779,12 +1781,12 @@ static int _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Para
 
       if (!foundHost)
       {
-         // DiagnosticsState positionné à "Error_CannotResolveHostName"
+         // DiagnosticsState positionnï¿½ ï¿½ "Error_CannotResolveHostName"
          *pResult = DM_ENG_newTabParameterValueStruct(1);
          (*pResult)[0] = DM_ENG_newParameterValueStruct(DM_ENG_LAN_TRACEROUTE_DIAG_STATE_NAME, DM_ENG_ParameterType_UNDEFINED, DM_ENG_ERROR_CANNOT_RESOLVE_STATE);
          (*pResult)[1] =NULL;
 
-         res = 0; // résultat fourni de façon synchrone
+         res = 0; // rï¿½sultat fourni de faï¿½on synchrone
       }
       else
       {
@@ -1807,7 +1809,7 @@ static int _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Para
          }
          free(routeHops);
 
-         res = 0; // résultat fourni de façon synchrone
+         res = 0; // rï¿½sultat fourni de faï¿½on synchrone
       }
    }
 
@@ -1816,16 +1818,16 @@ static int _traceroute(DM_ENG_ParameterValueStruct* paramList[], OUT DM_ENG_Para
 
 /**
  * Prepares the collection of statistics identified by the objName. As appropriate, the data will be collected in polling mode (periodic calls
- * to the DM_ENG_Device_getSampleData() function by the DM Engine) or or by events notified to the DM Engine (callback DM_ENG_ParameterManager_sampleData()). 
- * 
+ * to the DM_ENG_Device_getSampleData() function by the DM Engine) or or by events notified to the DM Engine (callback DM_ENG_ParameterManager_sampleData()).
+ *
  * @param objName Name of the data model object dedicated to a stats group
  * @param timeRef Time reference used the stats sampling
  * @param sampleInterval Time interval between consecutive sampling
  * @param args Args string that can be used for the specific stats group
- * 
+ *
  * @return Error code : 0 if OK, 1 if the component is not ready to start collection, 2 or others for various types of errors
- * 
- * N.B. This function may be called with objName == NULL. In this case, the return value indicates if the device is ready to start statistics.  
+ *
+ * N.B. This function may be called with objName == NULL. In this case, the return value indicates if the device is ready to start statistics.
  */
 int DM_ENG_Device_startSampling(const char* objName, time_t timeRef, unsigned int sampleInterval, const char* args)
 {
@@ -1835,7 +1837,7 @@ int DM_ENG_Device_startSampling(const char* objName, time_t timeRef, unsigned in
 }
 
 /**
- * Stop the collection of statistics. 
+ * Stop the collection of statistics.
  * Polling mode : polling function should no longer called.
  * Event mode : no more calls to the callback function.
  */
@@ -1845,7 +1847,7 @@ int DM_ENG_Device_stopSampling(const char* objName)
 }
 
 /**
- * 
+ *
  * @param timeStampBefore Data for this time stamp are already passed. They should not be provided again.
  * If no new data are available, no new DM_ENG_SampleDataStruct is created. A non zero code (1) is returned.
  */
@@ -1862,12 +1864,12 @@ int DM_ENG_Device_getSampleData(const char* objName, time_t timeStampBefore, con
          res = DM_ENG_Device_getObject(objName, data, &parameterList);
          if (res == 0)
          {
-            *pSampleData = DM_ENG_newSampleDataStruct(objName, parameterList, time(NULL), true, false); // N.B. continued à true. Pourrait être positionné à !_starting, ou autre...
+            *pSampleData = DM_ENG_newSampleDataStruct(objName, parameterList, time(NULL), true, false); // N.B. continued ï¿½ true. Pourrait ï¿½tre positionnï¿½ ï¿½ !_starting, ou autre...
             DM_ENG_deleteTabParameterValueStruct(parameterList);
          }
          else
          {
-            printf("Polling de données statistiques sur objet inconnu : %s\n", objName);
+            printf("Polling de donnï¿½es statistiques sur objet inconnu : %s\n", objName);
          }
       }
       else
@@ -1884,7 +1886,7 @@ static char* _statObject = DM_PREFIX "Services.STBService.1.ServiceMonitoring.Ma
 
 static void _testAction()
 {
-   // notification spontanée de nouvelles données statistiques
+   // notification spontanï¿½e de nouvelles donnï¿½es statistiques
    DM_ENG_SampleDataStruct* sampleData = NULL;
    if (DM_ENG_Device_getSampleData(_statObject, 0, "1", &sampleData) == 0)
    {
