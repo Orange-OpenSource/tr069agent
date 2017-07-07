@@ -1472,47 +1472,6 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
      return 0;
 }
 
-
-static void _relocateInstances(char* objName, unsigned int instanceNb)
-{
-   char* shortObjName = objName + strlen(DM_ENG_PARAMETER_PREFIX);
-   int objLen = strlen(shortObjName);
-   char* instanceName = (char*)calloc(objLen+12, sizeof(char));
-   sprintf(instanceName, "%s%u.", shortObjName, instanceNb);
-   int numLen = strlen(instanceName) - objLen - 1;
-   char* prmName;
-   for (prmName = DM_ENG_ParameterData_getFirstName(); prmName!=NULL; prmName = DM_ENG_ParameterData_getNextName())
-   {
-      if (strncmp(prmName + strlen(DM_ENG_PARAMETER_PREFIX), instanceName, strlen(instanceName)) == 0)
-      {
-         DM_ENG_Parameter* param = DM_ENG_ParameterData_getCurrent();
-         if ((param->storageMode == DM_ENG_StorageMode_COMPUTED) && (param->definition != NULL))
-         {
-            if (*param->definition == '#')
-            {
-               if ((strncmp(param->definition+1, shortObjName, objLen) == 0) && (param->definition[objLen+1]=='.'))
-               {
-                  char* newExp = (char*)calloc(strlen(param->definition)+numLen+1, sizeof(char));
-                  sprintf(newExp, "#%s%s", instanceName, param->definition+objLen+2);
-                  free(param->definition);
-                  param->definition = newExp;
-                  DM_ENG_Parameter_setDataChanged(true);
-               }
-            }
-            else if ((strncmp(param->definition, shortObjName, objLen) == 0) && (param->definition[objLen]=='.')) // ne pas modifier que le nom du d�but !!
-            {
-               char* newExp = (char*)calloc(strlen(param->definition)+numLen+1, sizeof(char));
-               sprintf(newExp, "%s%s", instanceName, param->definition+objLen+1);
-               free(param->definition);
-               param->definition = newExp;
-               DM_ENG_Parameter_setDataChanged(true);
-            }
-         }
-      }
-   }
-   free(instanceName);
-}
-
 /**
  * @brief Main thread entry point to simulate the device interface (allow to set value
  *        and simulate the parameter value change)
@@ -1606,7 +1565,6 @@ static void _relocateInstances(char* objName, unsigned int instanceNb)
                       strcpy(instanceparamname, objectName);
                       strcat(instanceparamname, cInstanceNb);
                       strcat(instanceparamname, ".");
-                      _relocateInstances(instanceparamname, nInstanceNb);
                       parameterName = malloc(strlen(instanceparamname)+strlen("name")+1);
                       strcpy(parameterName, instanceparamname);
                       strcat(parameterName, "name");
