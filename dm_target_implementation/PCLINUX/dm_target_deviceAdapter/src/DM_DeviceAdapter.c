@@ -34,7 +34,8 @@
 #include "DM_ENG_Device.h"
 #include "DM_ENG_TransferRequest.h"
 #include "DM_ENG_DiagnosticsLauncher.h"
-
+#include "DM_ENG_Parameter.h"
+#include "DM_ENG_ParameterData.h"
 #include "DM_GlobalDefs.h"
 #include "CMN_Trace.h"
 #include "DM_SystemCalls.h"
@@ -50,6 +51,14 @@
 #include <ctype.h>
 #include <signal.h>
 
+#include <poll.h>
+#include <sys/inotify.h>
+#include <sys/stat.h>
+#include <dirent.h>
+
+/* -------- PRIVATE DEFINTIONS ----------- */
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 /* -------- PRIVATE DEFINTIONS ----------- */
 
 #ifndef _InternetGatewayDevice_
@@ -1446,10 +1455,190 @@ static void _flush(){
 }
 
 /**
+ * Add an new instance for new created file
+ */
+static int _addFileParameterInstance(char* filename, char* objectName, unsigned int* pInstanceNumber){
+    DM_ENG_Parameter* param = DM_ENG_ParameterData_getParameter(objectName);
+    if ((param == NULL) || !DM_ENG_Parameter_isNode(param->name)) return DM_ENG_INVALID_PARAMETER_NAME;
+    if (!param->writable) return DM_ENG_REQUEST_DENIED;
+
+    if (param->storageMode == DM_ENG_StorageMode_DM_ONLY)
+    {
+       if ((unsigned int)param->minValue >= INT_MAX) return DM_ENG_RESOURCES_EXCEEDED;
+       param->minValue++;
+       *pInstanceNumber = (unsigned int)param->minValue;
+       DBG("minValue is %u", param->minValue);
+     }
+     return 0;
+}
+
+
+static void _relocateInstances(char* objName, unsigned int instanceNb)
+{
+   char* shortObjName = objName + strlen(DM_ENG_PARAMETER_PREFIX);
+   int objLen = strlen(shortObjName);
+   char* instanceName = (char*)calloc(objLen+12, sizeof(char));
+   sprintf(instanceName, "%s%u.", shortObjName, instanceNb);
+   int numLen = strlen(instanceName) - objLen - 1;
+   char* prmName;
+   for (prmName = DM_ENG_ParameterData_getFirstName(); prmName!=NULL; prmName = DM_ENG_ParameterData_getNextName())
+   {
+      if (strncmp(prmName + strlen(DM_ENG_PARAMETER_PREFIX), instanceName, strlen(instanceName)) == 0)
+      {
+         DM_ENG_Parameter* param = DM_ENG_ParameterData_getCurrent();
+         if ((param->storageMode == DM_ENG_StorageMode_COMPUTED) && (param->definition != NULL))
+         {
+            if (*param->definition == '#')
+            {
+               if ((strncmp(param->definition+1, shortObjName, objLen) == 0) && (param->definition[objLen+1]=='.'))
+               {
+                  char* newExp = (char*)calloc(strlen(param->definition)+numLen+1, sizeof(char));
+                  sprintf(newExp, "#%s%s", instanceName, param->definition+objLen+2);
+                  free(param->definition);
+                  param->definition = newExp;
+                  DM_ENG_Parameter_setDataChanged(true);
+               }
+            }
+            else if ((strncmp(param->definition, shortObjName, objLen) == 0) && (param->definition[objLen]=='.')) // ne pas modifier que le nom du d�but !!
+            {
+               char* newExp = (char*)calloc(strlen(param->definition)+numLen+1, sizeof(char));
+               sprintf(newExp, "%s%s", instanceName, param->definition+objLen+1);
+               free(param->definition);
+               param->definition = newExp;
+               DM_ENG_Parameter_setDataChanged(true);
+            }
+         }
+      }
+   }
+   free(instanceName);
+}
+
+/**
  * @brief Main thread entry point to simulate the device interface (allow to set value
  *        and simulate the parameter value change)
  *
  */
+ // Test code
+ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
+
+   char* observedDir = "./FileList/";
+   int fd;
+   int wd;
+   nfds_t nfds;
+   struct pollfd fds[2];
+   char buf[EVENT_BUF_LEN];
+   const struct inotify_event *event;
+   ssize_t len;
+   char *ptr;
+   char *parameterName;
+   char *parameterValue;
+   char* objectName = "Device.FileList.";
+   unsigned int nInstanceNb	= 0;
+
+   /*creating the INOTIFY instance*/
+   fd = inotify_init();
+
+   /*checking for error*/
+   if ( fd < 0 ) {
+     WARN("inotify_init ERROR");
+   }
+   /*there exists other EVENTs possible to be added to watch*/
+   wd = inotify_add_watch(fd, observedDir, IN_CREATE | IN_DELETE);
+   if (wd == -1) {
+       WARN("inotify_add_watch ERROR, can't watch %s", observedDir);
+   }
+
+   /* Prepare for polling */
+   nfds = 2;
+
+   /* Console input */
+   fds[0].fd = STDIN_FILENO;
+   fds[0].events = POLLIN;
+
+    /* Inotify input */
+   fds[1].fd = fd;
+   fds[1].events = POLLIN;
+
+   printf("Listening for events. --Start\n");
+   while(1) {
+
+     int poll_num = poll(fds, nfds, -1);
+
+     if (poll_num == -1) {
+       if (errno == EINTR)
+          continue;
+      WARN("polling ERROR");
+     }
+
+     if (poll_num > 0) {
+       if (fds[1].revents & POLLIN){
+
+         /* Loop while events can be read from inotify file descriptor. */
+         for (;;) {
+             /* Read some events. */
+             len = read(fd, buf, sizeof buf);
+             if (len == -1 && errno != EAGAIN) {
+                 perror("read");
+                 exit(EXIT_FAILURE);
+             }
+             /* If the nonblocking read() found no events to read, then
+                it returns -1 with errno set to EAGAIN. In that case,
+                we exit the loop. */
+             if (len <= 0)
+                 break;
+             /* Loop over all events in the buffer */
+             for (ptr = buf; ptr < buf + len; ptr += sizeof(struct inotify_event) + event->len) {
+
+                 event = (const struct inotify_event *) ptr;
+
+                 /* Print event type */
+                 if (event->mask & IN_CREATE){
+                   printf("%s CREATED: %s -> To add a parameter for this file in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
+                   /*First need to create an instance for this file, for example, Devce.FileList.1.
+                    *then change Devce.FileList.1.name value using DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue)*/
+
+                    int res = _addFileParameterInstance(event->name, objectName, &nInstanceNb);
+                    if (res == 0) {
+                      DM_ENG_Parameter* filelistparam = DM_ENG_ParameterManager_getParameter(objectName);
+                      DM_ENG_ParameterData_createInstance(filelistparam, nInstanceNb);
+                      char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
+                      char* instanceparamname = malloc(strlen(objectName)+strlen(cInstanceNb)+strlen(".")+1);
+                      strcpy(instanceparamname, objectName);
+                      strcat(instanceparamname, cInstanceNb);
+                      strcat(instanceparamname, ".");
+                      _relocateInstances(instanceparamname, nInstanceNb);
+                      parameterName = malloc(strlen(instanceparamname)+strlen("name")+1);
+                      strcpy(parameterName, instanceparamname);
+                      strcat(parameterName, "name");
+                      parameterValue = strdup(event->name);
+                      DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
+                      DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
+                      free(cInstanceNb);
+                      free(instanceparamname);
+                      free(parameterName);
+                      free(parameterValue);
+                    }
+                 }
+
+                 if (event->mask & IN_DELETE){
+                   printf("%s DELETED: %s -> Delete this file parameter in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
+                 }
+
+                 if (event->mask & IN_MOVED_TO){
+                   printf("Name changed, new name: %s", event->name);
+                 }
+             }
+         }
+       }
+     }
+     DM_CMN_Thread_sleep(2);
+   }
+   /*removing directory from the watch list.*/
+   inotify_rm_watch(fd, wd);
+   close(fd);
+   return 0;
+ }  // End of test code. Delete test code and uncomment following code
+/*
 static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
   char   action;
   char   tmp[MAX_PARAMETER_NAME_VALUE_SIZE];
@@ -1606,7 +1795,7 @@ static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
 
   return 0;
 }
-
+*/
 #endif
 
 /**
