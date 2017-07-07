@@ -1560,19 +1560,17 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
                     if (res == 0) {
                       DM_ENG_Parameter* filelistparam = DM_ENG_ParameterManager_getParameter(objectName);
                       DM_ENG_ParameterData_createInstance(filelistparam, nInstanceNb);
+
                       char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
-                      char* instanceparamname = malloc(strlen(objectName)+strlen(cInstanceNb)+strlen(".")+1);
-                      strcpy(instanceparamname, objectName);
-                      strcat(instanceparamname, cInstanceNb);
-                      strcat(instanceparamname, ".");
-                      parameterName = malloc(strlen(instanceparamname)+strlen("name")+1);
-                      strcpy(parameterName, instanceparamname);
-                      strcat(parameterName, "name");
+                      parameterName = malloc(strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1);
+                      strcpy(parameterName, objectName);
+                      strcat(parameterName, cInstanceNb);
+                      strcat(parameterName, ".name");
+
                       parameterValue = strdup(event->name);
                       DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
                       DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
                       free(cInstanceNb);
-                      free(instanceparamname);
                       free(parameterName);
                       free(parameterValue);
                     }
