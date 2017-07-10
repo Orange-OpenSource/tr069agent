@@ -36,6 +36,7 @@
 #include "DM_ENG_DiagnosticsLauncher.h"
 #include "DM_ENG_Parameter.h"
 #include "DM_ENG_ParameterData.h"
+#include "DM_ENG_ParameterManager.h"
 #include "DM_GlobalDefs.h"
 #include "CMN_Trace.h"
 #include "DM_SystemCalls.h"
@@ -1473,6 +1474,44 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
 }
 
 /**
+ * search the parameter by its value
+ * For example, if parameter Device.FileList.1.name value is parametervalue, return parameter name should be: Device.FileList.1.name
+ */
+static char* _findParameterByValue(char* objectName, char* parametervalue){
+
+  char* prmName;
+  for (prmName = DM_ENG_ParameterManager_getFirstParameterName(); prmName != NULL; prmName = DM_ENG_ParameterManager_getNextParameterName()){
+    if ((strncmp(prmName, objectName, strlen(objectName)) == 0) && (strstr(prmName, "..") == NULL)) {
+      if(!DM_ENG_Parameter_isNode(prmName)){
+        DM_ENG_Parameter* param = DM_ENG_ParameterManager_getCurrentParameter();
+        if (param->value != NULL){
+          if(strcmp(parametervalue, param->value) == 0) {
+            return prmName;
+          }
+        }
+      }
+    }
+  }
+  return NULL;
+}
+
+/**
+ *  find the nearest node parameter name by a leaf parameter name
+ *  for example, Device.FileList.1.name should return Device.FileList.1.
+ */
+static char* _findNearestNodeName(char* leafname){
+  ssize_t objLen = strlen(leafname);
+  int i = 0;
+  while((leafname[objLen-i-1] != '.') && i < objLen){
+    i++;
+  }
+  if (i < objLen) {
+    char* nodename = strndup(leafname, objLen-i);
+    return nodename;
+  }
+  return NULL;
+}
+/**
  * @brief Main thread entry point to simulate the device interface (allow to set value
  *        and simulate the parameter value change)
  *
@@ -1578,8 +1617,17 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
 
                  if (event->mask & IN_DELETE){
                    printf("%s DELETED: %s -> Delete this file parameter in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
+                   char* foundparamname = _findParameterByValue(objectName, event->name);
+                   if (foundparamname != NULL) {
+                     char* foundnodename = _findNearestNodeName(foundparamname);
+                     if (foundnodename != NULL) {
+                       DM_ENG_ParameterData_deleteObject(foundnodename);
+                       DBG("Delete objectName %s", foundnodename);
+                     }
+                   }
                  }
 
+                 /*This is for file name change*/
                  if (event->mask & IN_MOVED_TO){
                    printf("Name changed, new name: %s", event->name);
                  }
@@ -1587,7 +1635,6 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
          }
        }
      }
-     DM_CMN_Thread_sleep(2);
    }
    /*removing directory from the watch list.*/
    inotify_rm_watch(fd, wd);

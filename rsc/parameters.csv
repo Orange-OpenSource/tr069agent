@@ -68,5 +68,5 @@ ManagementServer.X_ORANGE-COM_WIFIComm.Active;BOOLEAN;2;1;0;0;0;0;;0;0;0
 
 FileList.;ANY;0;1;1;2;0;0;;;0;0
 FileList..;ANY;0;1;1;2;0;0;;;0;0
-FileList..name;STRING;0;1;1;2;0;0;;name;0;0
-FileList..size;STRING;0;1;1;2;0;0;;11;0;0
+FileList..name;STRING;0;1;1;2;0;0;;filename;0;0
+FileList..size;STRING;2;1;1;2;0;0;;0;0;0
