@@ -1520,6 +1520,7 @@ static char* _findNearestNodeName(char* leafname){
  static void * _deviceInterfaceSimulationThread(void* data UNUSED) {
 
    char* observedDir = "./FileList/";
+   char* objectName = "Device.FileList.";
    int fd;
    int wd;
    nfds_t nfds;
@@ -1528,10 +1529,39 @@ static char* _findNearestNodeName(char* leafname){
    const struct inotify_event *event;
    ssize_t len;
    char *ptr;
-   char *parameterName;
-   char *parameterValue;
-   char* objectName = "Device.FileList.";
    unsigned int nInstanceNb	= 0;
+   int res;
+
+   // Initialisation: creat instance for files already exist in observed folder
+   DIR *dirp;
+   struct dirent *dent;
+   dirp=opendir(observedDir);
+   while ((dent=readdir(dirp)) != NULL){
+     if (dent) {
+       if (dent->d_type == DT_REG) {
+         res = _addFileParameterInstance(dent->d_name, objectName, &nInstanceNb);
+         if (res == 0) {
+           DM_ENG_Parameter* objectparam = DM_ENG_ParameterManager_getParameter(objectName);
+           DM_ENG_ParameterData_createInstance(objectparam, nInstanceNb);
+
+           char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
+           int prmnamesize = strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1;
+           char* parameterName = (char*)malloc(prmnamesize);
+           memset(parameterName, 0x00, prmnamesize);
+           strcpy(parameterName, objectName);
+           strcat(parameterName, cInstanceNb);
+           strcat(parameterName, ".name");
+
+           char* parameterValue = strdup(dent->d_name);
+           DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
+           DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
+           free(cInstanceNb);
+           free(parameterName);
+           free(parameterValue);
+         }
+       }
+     }
+   }
 
    /*creating the INOTIFY instance*/
    fd = inotify_init();
@@ -1595,18 +1625,20 @@ static char* _findNearestNodeName(char* leafname){
                    /*First need to create an instance for this file, for example, Devce.FileList.1.
                     *then change Devce.FileList.1.name value using DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue)*/
 
-                    int res = _addFileParameterInstance(event->name, objectName, &nInstanceNb);
+                    res = _addFileParameterInstance(event->name, objectName, &nInstanceNb);
                     if (res == 0) {
                       DM_ENG_Parameter* filelistparam = DM_ENG_ParameterManager_getParameter(objectName);
                       DM_ENG_ParameterData_createInstance(filelistparam, nInstanceNb);
 
                       char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
-                      parameterName = malloc(strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1);
+                      int prmnamesize = strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1;
+                      char* parameterName = (char*)malloc(prmnamesize);
+                      memset(parameterName, 0x00, prmnamesize);
                       strcpy(parameterName, objectName);
                       strcat(parameterName, cInstanceNb);
                       strcat(parameterName, ".name");
 
-                      parameterValue = strdup(event->name);
+                      char* parameterValue = strdup(event->name);
                       DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
                       DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
                       free(cInstanceNb);
@@ -1616,20 +1648,16 @@ static char* _findNearestNodeName(char* leafname){
                  }
 
                  if (event->mask & IN_DELETE){
-                   printf("%s DELETED: %s -> Delete this file parameter in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
+                   printf("%s DELETED: %s -> To delete this file parameter in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
                    char* foundparamname = _findParameterByValue(objectName, event->name);
                    if (foundparamname != NULL) {
                      char* foundnodename = _findNearestNodeName(foundparamname);
                      if (foundnodename != NULL) {
                        DM_ENG_ParameterData_deleteObject(foundnodename);
                        DBG("Delete objectName %s", foundnodename);
+                       free(foundnodename);
                      }
                    }
-                 }
-
-                 /*This is for file name change*/
-                 if (event->mask & IN_MOVED_TO){
-                   printf("Name changed, new name: %s", event->name);
                  }
              }
          }
