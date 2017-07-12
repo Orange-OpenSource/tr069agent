@@ -1163,9 +1163,7 @@ static int _buildInfoList()
 
     infoPtr = (infoStructType *) malloc(sizeof(infoStructType ));
     infoPtr->paramNameStr  = nameStr;
-    DBG("_buildInfoList, build paramNameStr is %s", nameStr);
     infoPtr->paramValueStr = valueStr;
-    DBG("_buildInfoList, build paramNameStr value is %s", valueStr);
     infoPtr->next          = NULL;
     if(NULL == rootInfoElementPtr) {
       // First element
@@ -1468,7 +1466,6 @@ static int _addFileParameterInstance(char* filename, char* objectName, unsigned 
        if ((unsigned int)param->minValue >= INT_MAX) return DM_ENG_RESOURCES_EXCEEDED;
        param->minValue++;
        *pInstanceNumber = (unsigned int)param->minValue;
-       DBG("minValue is %u", param->minValue);
      }
      return 0;
 }
@@ -1531,6 +1528,7 @@ static char* _findNearestNodeName(char* leafname){
    char *ptr;
    unsigned int nInstanceNb	= 0;
    int res;
+   struct stat file_stats;
 
    // Initialisation: creat instance for files already exist in observed folder
    DIR *dirp;
@@ -1539,26 +1537,58 @@ static char* _findNearestNodeName(char* leafname){
    while ((dent=readdir(dirp)) != NULL){
      if (dent) {
        if (dent->d_type == DT_REG) {
-         res = _addFileParameterInstance(dent->d_name, objectName, &nInstanceNb);
-         if (res == 0) {
-           DM_ENG_Parameter* objectparam = DM_ENG_ParameterManager_getParameter(objectName);
-           DM_ENG_ParameterData_createInstance(objectparam, nInstanceNb);
 
-           char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
-           int prmnamesize = strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1;
-           char* parameterName = (char*)malloc(prmnamesize);
-           memset(parameterName, 0x00, prmnamesize);
-           strcpy(parameterName, objectName);
-           strcat(parameterName, cInstanceNb);
-           strcat(parameterName, ".name");
+         // build long path for files in order to read the size of files
+         char* longfilepath = (char*)calloc(strlen(observedDir)+strlen(dent->d_name)+1, sizeof(char));
+         strcpy(longfilepath, observedDir);
+         strcat(longfilepath, dent->d_name);
+         if (!stat(longfilepath, &file_stats)) {
 
-           char* parameterValue = strdup(dent->d_name);
-           DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
-           DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
-           free(cInstanceNb);
-           free(parameterName);
-           free(parameterValue);
+           res = _addFileParameterInstance(dent->d_name, objectName, &nInstanceNb);
+           DBG("addfileparameterinstance for %s, size is %lld, res is %d, instanceNumber is %u", dent->d_name, file_stats.st_size, res, nInstanceNb);
+           if (res == 0) {
+
+             DM_ENG_Parameter* objectparam = DM_ENG_ParameterManager_getParameter(objectName);
+             if (objectparam != NULL) {
+
+               DM_ENG_ParameterData_createInstance(objectparam, nInstanceNb);
+
+               char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
+               // build string: Device.FileList.nInstanceNb.name
+               int namestrsize = strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1;
+               char* nameprmName = (char*)calloc(namestrsize, sizeof(char));
+               strcpy(nameprmName, objectName);
+               strcat(nameprmName, cInstanceNb);
+               strcat(nameprmName, ".name");
+               // add file name for parameter Device.FileList.nInstanceNb.name and update parameter using DM_ENG_ParameterManager_dataNewValue
+               char* nameprmValue = strdup(dent->d_name);
+               DM_ENG_ParameterManager_dataNewValue(nameprmName, nameprmValue);
+
+               // build string: Device.FileList.nInstanceNb.size
+               int sizestrlen = strlen(objectName)+strlen(cInstanceNb)+strlen(".size")+1;
+               char* sizeprmName = (char*)calloc(sizestrlen, sizeof(char));
+               strcpy(sizeprmName, objectName);
+               strcat(sizeprmName, cInstanceNb);
+               strcat(sizeprmName, ".size");
+               // add file name for parameter Device.FileList.nInstanceNb.name and update parameter using DM_ENG_ParameterManager_dataNewValue
+               char* sizeprmValue = DM_ENG_longToString(file_stats.st_size);
+               DM_ENG_Parameter* sizeprm = DM_ENG_ParameterData_getParameter(sizeprmName);
+               if (sizeprm != NULL) {
+                 DM_ENG_Parameter_setValue(sizeprm, sizeprmValue);
+               } else {
+                 DBG("CAN NOT GET PARAMETER");
+               }
+               DM_ENG_ParameterManager_dataNewValue(sizeprmName, sizeprmValue);
+               //free memory
+               free(cInstanceNb);
+               free(nameprmName);
+               free(nameprmValue);
+               free(sizeprmName);
+               free(sizeprmValue);
+             }
          }
+         }
+         free(longfilepath);
        }
      }
    }
@@ -1571,7 +1601,7 @@ static char* _findNearestNodeName(char* leafname){
      WARN("inotify_init ERROR");
    }
    /*there exists other EVENTs possible to be added to watch*/
-   wd = inotify_add_watch(fd, observedDir, IN_CREATE | IN_DELETE);
+   wd = inotify_add_watch(fd, observedDir, IN_CREATE | IN_DELETE | IN_MODIFY);
    if (wd == -1) {
        WARN("inotify_add_watch ERROR, can't watch %s", observedDir);
    }
@@ -1639,9 +1669,45 @@ static char* _findNearestNodeName(char* leafname){
                       strcat(parameterName, ".name");
 
                       char* parameterValue = strdup(event->name);
-                      DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
-                      DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
+                      // using DM_ENG_Parameter_setValue to change parameter value
+                      DM_ENG_Parameter* setparam = DM_ENG_ParameterData_getParameter(parameterName);
+                      if (setparam != NULL) {
+                        DM_ENG_Parameter_setValue(setparam, parameterValue);
+                      } else {
+                        DBG("CAN NOT GET PARAMETER");
+                      }
+                      DBG("DM_ENG_Parameter_setValue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
+                      /*DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
+                      DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);*/
+
+                      /*get file size for subparameter FileList.nInstanceNb.size*/
+                      // build long path for files in order to read the size of files
+                      char* longfilepath = (char*)calloc(strlen(observedDir)+strlen(event->name)+1, sizeof(char));
+                      strcpy(longfilepath, observedDir);
+                      strcat(longfilepath, event->name);
+                      if (!stat(longfilepath, &file_stats)) {
+
+                        // build string: Device.FileList.nInstanceNb.size
+                        int sizestrlen = strlen(objectName)+strlen(cInstanceNb)+strlen(".size")+1;
+                        char* sizeprmName = (char*)calloc(sizestrlen, sizeof(char));
+                        strcpy(sizeprmName, objectName);
+                        strcat(sizeprmName, cInstanceNb);
+                        strcat(sizeprmName, ".size");
+                        // add file name for parameter Device.FileList.nInstanceNb.name and update parameter using DM_ENG_ParameterManager_dataNewValue
+                        char* sizeprmValue = DM_ENG_longToString(file_stats.st_size);
+                        DM_ENG_Parameter* sizeprm = DM_ENG_ParameterData_getParameter(sizeprmName);
+                        if (sizeprm != NULL) {
+                          DM_ENG_Parameter_setValue(sizeprm, sizeprmValue);
+                        } else {
+                          DBG("CAN NOT GET PARAMETER");
+                        }
+                        //DM_ENG_ParameterManager_dataNewValue(sizeprmName, sizeprmValue);
+                        free(sizeprmName);
+                        free(sizeprmValue);
+                      }
+
                       free(cInstanceNb);
+                      free(longfilepath);
                       free(parameterName);
                       free(parameterValue);
                     }
