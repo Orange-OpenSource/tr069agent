@@ -1601,7 +1601,7 @@ static char* _findNearestNodeName(char* leafname){
      WARN("inotify_init ERROR");
    }
    /*there exists other EVENTs possible to be added to watch*/
-   wd = inotify_add_watch(fd, observedDir, IN_CREATE | IN_DELETE | IN_MODIFY);
+   wd = inotify_add_watch(fd, observedDir, IN_CREATE | IN_DELETE | IN_CLOSE_WRITE);
    if (wd == -1) {
        WARN("inotify_add_watch ERROR, can't watch %s", observedDir);
    }
@@ -1651,70 +1651,74 @@ static char* _findNearestNodeName(char* leafname){
 
                  /* Print event type */
                  if (event->mask & IN_CREATE){
-                   printf("%s CREATED: %s -> To add a parameter for this file in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
-                   /*First need to create an instance for this file, for example, Devce.FileList.1.
-                    *then change Devce.FileList.1.name value using DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue)*/
+                   char* prmexist = _findParameterByValue(objectName, event->name);
+                   if (prmexist == NULL){
 
-                    res = _addFileParameterInstance(event->name, objectName, &nInstanceNb);
-                    if (res == 0) {
-                      DM_ENG_Parameter* filelistparam = DM_ENG_ParameterManager_getParameter(objectName);
-                      DM_ENG_ParameterData_createInstance(filelistparam, nInstanceNb);
+                     printf("%s CREATED: [%s] -> To add a parameter for this file in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
+                     /*First need to create an instance for this file, for example, Devce.FileList.1.
+                      *then change Devce.FileList.1.name value using DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue)*/
 
-                      char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
-                      int prmnamesize = strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1;
-                      char* parameterName = (char*)malloc(prmnamesize);
-                      memset(parameterName, 0x00, prmnamesize);
-                      strcpy(parameterName, objectName);
-                      strcat(parameterName, cInstanceNb);
-                      strcat(parameterName, ".name");
+                      res = _addFileParameterInstance(event->name, objectName, &nInstanceNb);
+                      if (res == 0) {
+                        DM_ENG_Parameter* filelistparam = DM_ENG_ParameterManager_getParameter(objectName);
+                        DM_ENG_ParameterData_createInstance(filelistparam, nInstanceNb);
 
-                      char* parameterValue = strdup(event->name);
-                      // using DM_ENG_Parameter_setValue to change parameter value
-                      DM_ENG_Parameter* setparam = DM_ENG_ParameterData_getParameter(parameterName);
-                      if (setparam != NULL) {
-                        DM_ENG_Parameter_setValue(setparam, parameterValue);
-                      } else {
-                        DBG("CAN NOT GET PARAMETER");
-                      }
-                      DBG("DM_ENG_Parameter_setValue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
-                      /*DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
-                      DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);*/
+                        char* cInstanceNb = DM_ENG_uintToString(nInstanceNb);
+                        int prmnamesize = strlen(objectName)+strlen(cInstanceNb)+strlen(".name")+1;
+                        char* parameterName = (char*)malloc(prmnamesize);
+                        memset(parameterName, 0x00, prmnamesize);
+                        strcpy(parameterName, objectName);
+                        strcat(parameterName, cInstanceNb);
+                        strcat(parameterName, ".name");
 
-                      /*get file size for subparameter FileList.nInstanceNb.size*/
-                      // build long path for files in order to read the size of files
-                      char* longfilepath = (char*)calloc(strlen(observedDir)+strlen(event->name)+1, sizeof(char));
-                      strcpy(longfilepath, observedDir);
-                      strcat(longfilepath, event->name);
-                      if (!stat(longfilepath, &file_stats)) {
-
-                        // build string: Device.FileList.nInstanceNb.size
-                        int sizestrlen = strlen(objectName)+strlen(cInstanceNb)+strlen(".size")+1;
-                        char* sizeprmName = (char*)calloc(sizestrlen, sizeof(char));
-                        strcpy(sizeprmName, objectName);
-                        strcat(sizeprmName, cInstanceNb);
-                        strcat(sizeprmName, ".size");
-                        // add file name for parameter Device.FileList.nInstanceNb.name and update parameter using DM_ENG_ParameterManager_dataNewValue
-                        char* sizeprmValue = DM_ENG_longToString(file_stats.st_size);
-                        DM_ENG_Parameter* sizeprm = DM_ENG_ParameterData_getParameter(sizeprmName);
-                        if (sizeprm != NULL) {
-                          DM_ENG_Parameter_setValue(sizeprm, sizeprmValue);
+                        char* parameterValue = strdup(event->name);
+                        // using DM_ENG_Parameter_setValue to change parameter value
+                        DM_ENG_Parameter* setparam = DM_ENG_ParameterData_getParameter(parameterName);
+                        if (setparam != NULL) {
+                          DM_ENG_Parameter_setValue(setparam, parameterValue);
                         } else {
                           DBG("CAN NOT GET PARAMETER");
                         }
-                        //DM_ENG_ParameterManager_dataNewValue(sizeprmName, sizeprmValue);
-                        free(sizeprmName);
-                        free(sizeprmValue);
-                      }
+                        DBG("DM_ENG_Parameter_setValue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);
+                        /*DM_ENG_ParameterManager_dataNewValue(parameterName, parameterValue);
+                        DBG("datanewvalue, parameterName is %s, parameterValue is %s", parameterName,parameterValue);*/
 
-                      free(cInstanceNb);
-                      free(longfilepath);
-                      free(parameterName);
-                      free(parameterValue);
-                    }
+                        /*get file size for subparameter FileList.nInstanceNb.size*/
+                        // build long path for files in order to read the size of files
+                        char* longfilepath = (char*)calloc(strlen(observedDir)+strlen(event->name)+1, sizeof(char));
+                        strcpy(longfilepath, observedDir);
+                        strcat(longfilepath, event->name);
+                        if (!stat(longfilepath, &file_stats)) {
+
+                          // build string: Device.FileList.nInstanceNb.size
+                          int sizestrlen = strlen(objectName)+strlen(cInstanceNb)+strlen(".size")+1;
+                          char* sizeprmName = (char*)calloc(sizestrlen, sizeof(char));
+                          strcpy(sizeprmName, objectName);
+                          strcat(sizeprmName, cInstanceNb);
+                          strcat(sizeprmName, ".size");
+                          // add file name for parameter Device.FileList.nInstanceNb.name and update parameter using DM_ENG_ParameterManager_dataNewValue
+                          char* sizeprmValue = DM_ENG_longToString(file_stats.st_size);
+                          DM_ENG_Parameter* sizeprm = DM_ENG_ParameterData_getParameter(sizeprmName);
+                          if (sizeprm != NULL) {
+                            DM_ENG_Parameter_setValue(sizeprm, sizeprmValue);
+                          } else {
+                            DBG("CAN NOT GET PARAMETER");
+                          }
+                          //DM_ENG_ParameterManager_dataNewValue(sizeprmName, sizeprmValue);
+                          free(sizeprmName);
+                          free(sizeprmValue);
+                        }
+
+                        free(cInstanceNb);
+                        free(longfilepath);
+                        free(parameterName);
+                        free(parameterValue);
+                      }
+                   }
                  }
 
                  if (event->mask & IN_DELETE){
-                   printf("%s DELETED: %s -> To delete this file parameter in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
+                   printf("%s DELETED: [%s] -> To delete this file parameter in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
                    char* foundparamname = _findParameterByValue(objectName, event->name);
                    if (foundparamname != NULL) {
                      char* foundnodename = _findNearestNodeName(foundparamname);
@@ -1724,6 +1728,43 @@ static char* _findNearestNodeName(char* leafname){
                        free(foundnodename);
                      }
                    }
+                 }
+
+                 if (event->mask & IN_CLOSE_WRITE){
+                   printf("%s CLOSE_WRITE: [%s] -> To update file size in data model\n", (event->mask & IN_ISDIR) ? "directory":"file", event->name);
+
+                   /*get file size for subparameter FileList.nInstanceNb.size*/
+                   // build long path for files in order to read the size of files
+                   char* longfilepath = (char*)calloc(strlen(observedDir)+strlen(event->name)+1, sizeof(char));
+                   strcpy(longfilepath, observedDir);
+                   strcat(longfilepath, event->name);
+                   if (!stat(longfilepath, &file_stats)) {
+                     // build string: Device.FileList.nInstanceNb.size
+                     char* foundparamname = _findParameterByValue(objectName, event->name);
+                     if (foundparamname != NULL) {
+                       char* foundnodename = _findNearestNodeName(foundparamname);
+                       if (foundnodename != NULL) {
+                         int sizestrlen = strlen(foundnodename)+strlen("size")+1;
+                         char* sizeprmName = (char*)calloc(sizestrlen, sizeof(char));
+                         strcpy(sizeprmName, foundnodename);
+                         strcat(sizeprmName, "size");
+                         DBG("sizeprmName is %s", sizeprmName);
+                         // add file name for parameter Device.FileList.nInstanceNb.name and update parameter using DM_ENG_ParameterManager_dataNewValue
+                         char* sizeprmValue = DM_ENG_longToString(file_stats.st_size);
+                         DBG("%s sizeprmValue is %s", event->name, sizeprmValue);
+                         DM_ENG_Parameter* sizeprm = DM_ENG_ParameterData_getParameter(sizeprmName);
+                         if (sizeprm != NULL) {
+                           DM_ENG_Parameter_setValue(sizeprm, sizeprmValue);
+                         } else {
+                           DBG("CAN NOT GET PARAMETER");
+                         }
+                         //DM_ENG_ParameterManager_dataNewValue(sizeprmName, sizeprmValue);
+                         free(sizeprmName);
+                         free(sizeprmValue);
+                       }
+                     }
+                   }
+                  free(longfilepath);
                  }
              }
          }
