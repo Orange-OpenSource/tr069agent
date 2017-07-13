@@ -170,6 +170,10 @@ static void * _deviceInterfaceSimulationThread(void* data);        /* Used to si
 static void   _testAction();
 #endif
 
+static int _addFileParameterInstance(char* filename, char* objectName, unsigned int* pInstanceNumber);
+static char* _findParameterByValue(char* objectName, char* parametervalue);
+static char* _findNearestNodeName(char* leafname);
+
 #define MAX_PARAMETER_NAME_VALUE_SIZE (256)
 
 // Mutex used to protect download sequence.
