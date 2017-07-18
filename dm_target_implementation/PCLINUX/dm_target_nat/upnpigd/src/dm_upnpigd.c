@@ -80,7 +80,10 @@ static struct UPNPDev * dev;
 // --------------------------------------------------------------------
 // New definitions
 // --------------------------------------------------------------------
-#define IGD_SLEEP_TIME_ON_LeaseDuration 3600 /*Default value 3600*/  // not sure using const or define
+#define IGD_SLEEP_TIME_ON_LeaseDuration (3500) /*Default value 3600, sleep time slightly smaller than 3600*/
+
+/*local functions declaration*/
+static int refreshLeaseDuration(char* ExternalPort, char* InternalClient);
 
 // --------------------------------------------------------------------
 // FUNCTIONS defined in the file
@@ -100,15 +103,20 @@ void*
 DM_IGD_upnpigdThread()
 {
   do {
-    DBG("g_randomCpeUrl is %s", g_randomCpeUrl);
-    sleep(30);
+    sleep(IGD_SLEEP_TIME_ON_LeaseDuration);
+    refreshLeaseDuration(reservedPort, lanaddr);
   } while(true);
 }
-// --------------------------------------------------------------------
-// Functions definitions
-// --------------------------------------------------------------------
 
-
+/**
+ * @brief create port mapping and build ConnectionRequestUrl using external ip address and external port
+ *  this function is invoked in DM_ENG_Device_getNames in DM_DeviceAdapter.c every time ConnectionRequestUrl is needed
+ *
+ * @param pResult: string ConnectionRequestUrl
+ *
+ * @return 0 if success, -1 if fail
+ *
+ */
 int DM_IGD_buildConnectionRequestUrl(char** pResult)
 {
   // variables for GetExternalIPAddress()
@@ -118,7 +126,7 @@ int DM_IGD_buildConnectionRequestUrl(char** pResult)
   char extPort[6] = "unset";
 
   int strSize = 0;
-  int ret;
+  int ret = -1;
   DBG("Build ConnectionRequestUrl Begin!");
   DBG("searching UPnP IGD devices ...");
 	devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
@@ -240,6 +248,84 @@ int DM_IGD_buildConnectionRequestUrl(char** pResult)
   return ret;
 }
 
-int refreshLeaseDuration(char* RemoteHost, char* ExternalPort, char* PortMappingProtocol, char* InternalClient){
+/**
+ * @brief activate port mappping periodicly by using the same RemoteHost(always NULL), ExternalPort, PortMappingProtocol(always TCP), InternalClient to refresh leaseDuration
+ *         (keep this port mapping active)
+ *
+ * @param ExternalPort: the external port used for port mapping
+ * @param InternalClient: ip address of internal client
+ * @return 0 if success, -1 if fail
+ *
+ */
+static int refreshLeaseDuration(char* ExternalPort, char* InternalClient){
+  int ret = -1;
+  if ((ExternalPort != NULL) && (InternalClient != NULL)) {
 
+    DBG("Activate this port mapping to refresh LeaseDuration");
+  	devlist = upnpDiscoverIGD(2000, multicastif, minissdpdpath,
+  													 0/*localport*/, ipv6, ttl, &error);
+  	if (devlist) {
+      int i, reten, retam;
+  		for(dev = devlist, i = 1; dev != NULL; dev = dev->pNext, i++) {
+        // variables for UPNP_GetValidIGD()
+        struct UPNPUrls urls;
+        struct IGDdatas data;
+  			int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
+  			if (state == 1) {
+
+  				if (strcmp(lanaddr, InternalClient) == 0)/*if same InternalClient*/{
+            /* for WANIPConnection:2*/
+            if (0 == strcmp(dev->st, "urn:schemas-upnp-org:service:WANIPConnection:2")){
+
+              retam = UPNP_AddAnyPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+                                   ExternalPort /*extPort*/,
+                                   inPort /*controlURL*/,
+                                   InternalClient /*intClient*/,
+                                   "Refresh leaseDuration" /*desc*/,
+                                   proto /*proto UPPERCASE*/,
+                                   remoteHost /*remoteHost*/,
+                                   leaseDuration /*leaseDuration*/,
+                                   reservedPort /*reservedPort*/);
+              if (retam == UPNPCOMMAND_SUCCESS){
+                DBG("Refresh AddAnyPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
+                                                                  reservedPort, inPort, leaseDuration);
+                ret = 0;
+              } else {
+                DBG("Refresh AddAnyPortMapping Error!!! Error code: %d, %s\n", retam, strupnperror(retam));
+                ret = -1;
+              }
+            } /*else: WANIPConnection:1 and WANPPPConnection:1*/
+            else {
+
+              retam = UPNP_AddPortMapping(urls.controlURL /*controlURL*/, data.first.servicetype /*servicetype*/,
+                                   ExternalPort /*extPort*/,
+                                   inPort /*inPort*/,
+                                   InternalClient /*intClient*/,
+                                   "Refresh leaseDuration" /*desc*/,
+                                   proto /*proto UPPERCASE*/,
+                                   remoteHost /*remoteHost*/,
+                                   leaseDuration /*leaseDuration*/);
+              if (retam == UPNPCOMMAND_SUCCESS) {
+                 DBG("Refresh AddPortMapping Success! externalPort: %s, internalPort: %s, leaseDuration: %s\n",
+                                                                    ExternalPort, inPort, leaseDuration);
+                 ret = 0;
+               } else {
+                 DBG("Refresh AddAnyPortMapping Error!!! Error code: %d, %s\n", retam, strupnperror(retam));
+                 ret = -1;
+               }
+             }
+           }
+          FreeUPNPUrls(&urls);
+        }/*if state*/else {
+            DBG("No valid device found by UPNP_GetValidIGD !!!");
+            ret = -1;
+        }
+      } /*for(dev)*/
+      freeUPNPDevlist(devlist); devlist=0;
+    }/*if devlist*/ else {
+      DBG("No UPnP IGD device found by upnpDiscoverIGD!!!");
+      ret = -1;
+    }
+  }
+  return ret;
 }
