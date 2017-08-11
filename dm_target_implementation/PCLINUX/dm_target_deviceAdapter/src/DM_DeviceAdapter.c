@@ -364,6 +364,7 @@ int DM_ENG_Device_getValue(const char* name, const char* systemData, OUT char** 
          if yes, extPort_int increments by 1 until find one external port available
          do not forget to change this extPort_int to char extPort using DM_ENG_intToString() method */
          int ret = DM_IGD_buildConnectionRequestUrl(pVal);
+         /*if failed, rebuild ConnectionRequestURL without port mapping*/
          if (ret != 0) {
 
             DBG("UPnP Port mapping not success!!! BUILD ConnectionRequestURL without port mapping");

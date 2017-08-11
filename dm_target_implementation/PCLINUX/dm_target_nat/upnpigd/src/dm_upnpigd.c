@@ -12,10 +12,12 @@
  *
  * Created     : 30/05/2017
  * Author      : Ying ZENG (Stage de fin d'etude Polytech Nantes 2017)
- *
+ * To enable this thread, add "IGD_ENABLE=Y" at compile time
+ * e.g. make Target=PCLINUX TRACE_LEVEL=7 IGD_ENABLE=Y
  *---------------------------------------------------------------------------
  *
- *  TODO :
+ *  TODO : Implement UPnP subscription mechanism (Event notification mechanism)
+ *         Get notification message from gateway to check if external IP address has changed
  *
  *---------------------------------------------------------------------------
  */
@@ -102,10 +104,10 @@ static int refreshLeaseDuration(char* ExternalPort, char* InternalClient);
 void*
 DM_IGD_upnpigdThread()
 {
-  do {
+  while (true) {
     sleep(IGD_SLEEP_TIME_ON_LeaseDuration);
     refreshLeaseDuration(reservedPort, lanaddr);
-  } while(true);
+  }
 }
 
 /**
