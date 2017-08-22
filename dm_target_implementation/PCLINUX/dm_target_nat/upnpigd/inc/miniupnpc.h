@@ -144,6 +144,8 @@ FreeUPNPUrls(struct UPNPUrls *);
 /* return 0 or 1 */
 MINIUPNP_LIBSPEC int UPNPIGD_IsConnected(struct UPNPUrls *, struct IGDdatas *);
 
+char * build_absolute_url(const char * baseurl, const char * descURL,
+                   const char * url, unsigned int scope_id);
 
 #ifdef __cplusplus
 }

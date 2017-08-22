@@ -407,8 +407,7 @@ upnpDiscoverDevice(const char * device, int delay, const char * multicastif,
 	                           ipv6, ttl, error, 0);
 }
 
-static char *
-build_absolute_url(const char * baseurl, const char * descURL,
+char * build_absolute_url(const char * baseurl, const char * descURL,
                    const char * url, unsigned int scope_id)
 {
 	int l, n;

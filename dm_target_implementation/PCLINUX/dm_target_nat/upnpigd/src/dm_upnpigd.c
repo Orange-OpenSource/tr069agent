@@ -65,7 +65,7 @@ extern char * g_randomCpeUrl; // required for building ConnectionRequestURL
 static char * remoteHost = NULL;  /*RemoteHost*/
 static char  reservedPort [6] = "unset";  /*ExternalPort*/
 static char * proto = "TCP";  /* PortMappingProtocol. Mandatory to put TCP. UDP is not working.*/
-static char lanaddr[40] = "unset";	/* InternalClient */
+static char lanaddr[32] = "unset";	/* InternalClient */
 static char inPort[6] = "50805";   /*InternalPort*/
 static char leaseDuration[16]= "3600";  /*PortMappingLeaseDuration*/
 
