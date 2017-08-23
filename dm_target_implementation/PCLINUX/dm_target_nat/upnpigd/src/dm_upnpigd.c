@@ -51,6 +51,12 @@
 #include "dm_upnpigd.h"
 
 // --------------------------------------------------------------------
+// lib UPnP IGD's headers (pupnp)
+// --------------------------------------------------------------------
+#include "httpreadwrite.h"
+#include "statcodes.h"
+#include "upnpapi.h"
+// --------------------------------------------------------------------
 // DM_ENGINE's header
 // --------------------------------------------------------------------
 #include "DM_GlobalDefs.h"
@@ -86,6 +92,7 @@ static struct UPNPDev * dev;
 
 /*local functions declaration*/
 static int refreshLeaseDuration(char* ExternalPort, char* InternalClient);
+static int gena_subscribe(IN const UpnpString *url, INOUT int *timeout, IN const UpnpString *renewal_sid, OUT UpnpString *sid);
 
 // --------------------------------------------------------------------
 // FUNCTIONS defined in the file
@@ -104,6 +111,7 @@ static int refreshLeaseDuration(char* ExternalPort, char* InternalClient);
 void*
 DM_IGD_upnpigdThread()
 {
+  UpnpString *ActualSID = UpnpString_new();
   while (true) {
     sleep(IGD_SLEEP_TIME_ON_LeaseDuration);
     refreshLeaseDuration(reservedPort, lanaddr);
@@ -143,6 +151,15 @@ int DM_IGD_buildConnectionRequestUrl(char** pResult)
 			int state = UPNP_GetValidIGD(dev, &urls, &data, lanaddr, sizeof(lanaddr));
 			if (state == 1) {
 				DBG("local LAN IP Address is %s\n", lanaddr);
+        UpnpString *ActualSID = UpnpString_new();
+        UpnpString *PublisherURL = UpnpString_new();
+        char *eventsuburl = build_absolute_url(data.urlbase, dev->descURL, data.first.eventsuburl, dev->scope_id);
+        DBG("eventsuburl is %s", eventsuburl);
+        UpnpString_set_String(PublisherURL, eventsuburl);
+        int timeout = 3600;
+        int *TimeOut = &timeout;
+        int return_code = gena_subscribe(PublisherURL, TimeOut, NULL, ActualSID);
+        DBG("return code of subscribe is %d", return_code);
 				int ext = UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, extIpAddr);
 				if (ext == 0){
 					DBG("External IP Address of this network is %s\n", extIpAddr);
@@ -330,4 +347,150 @@ static int refreshLeaseDuration(char* ExternalPort, char* InternalClient){
     }
   }
   return ret;
+}
+
+/*!
+ * \brief Subscribes or renew subscription.
+ *
+ * \return 0 if successful, otherwise returns the appropriate error code.
+ */
+static int gena_subscribe(
+	/*! [in] URL of service to subscribe. */
+	IN const UpnpString *url,
+	/*! [in,out] Subscription time desired (in secs). */
+	INOUT int *timeout,
+	/*! [in] for renewal, this contains a currently held subscription SID.
+	 * For first time subscription, this must be NULL. */
+	IN const UpnpString *renewal_sid,
+	/*! [out] SID returned by the subscription or renew msg. */
+	OUT UpnpString *sid)
+{
+	int return_code;
+	int parse_ret = 0;
+	int local_timeout = CP_MINIMUM_SUBSCRIPTION_TIME;
+	memptr sid_hdr;
+	memptr timeout_hdr;
+	char timeout_str[25];
+	membuffer request;
+	uri_type dest_url;
+	http_parser_t response;
+	int rc = 0;
+
+
+	UpnpString_clear(sid);
+
+	/* request timeout to string */
+	if (timeout == NULL) {
+		timeout = &local_timeout;
+	}
+	if (*timeout < 0) {
+		memset(timeout_str, 0, sizeof(timeout_str));
+		strncpy(timeout_str, "infinite", sizeof(timeout_str) - 1);
+	} else if(*timeout < CP_MINIMUM_SUBSCRIPTION_TIME) {
+		rc = snprintf(timeout_str, sizeof(timeout_str),
+			"%d", CP_MINIMUM_SUBSCRIPTION_TIME);
+	} else {
+		rc = snprintf(timeout_str, sizeof(timeout_str), "%d", *timeout);
+	}
+	if (rc < 0 || (unsigned int) rc >= sizeof(timeout_str))
+		return UPNP_E_OUTOF_MEMORY;
+
+	/* parse url */
+	return_code = http_FixStrUrl(
+		UpnpString_get_String(url),
+		UpnpString_get_Length(url),
+		&dest_url);
+	if (return_code != 0) {
+		return return_code;
+	}
+
+	/* make request msg */
+	membuffer_init(&request);
+	request.size_inc = 30;
+	if (renewal_sid) {
+		/* renew subscription */
+		return_code = http_MakeMessage(
+			&request, 1, 1,
+			"q" "ssc" "sscc",
+			HTTPMETHOD_SUBSCRIBE, &dest_url,
+			"SID: ", UpnpString_get_String(renewal_sid),
+			"TIMEOUT: Second-", timeout_str );
+	} else {
+		/* subscribe */
+		if (dest_url.hostport.IPaddress.ss_family == AF_INET6) {
+			struct sockaddr_in6* DestAddr6 = (struct sockaddr_in6*)&dest_url.hostport.IPaddress;
+			return_code = http_MakeMessage(
+				&request, 1, 1,
+				"q" "sssdsc" "sc" "sscc",
+				HTTPMETHOD_SUBSCRIBE, &dest_url,
+				"CALLBACK: <http://[",
+				(IN6_IS_ADDR_LINKLOCAL(&DestAddr6->sin6_addr) || strlen(gIF_IPV6_ULA_GUA) == 0) ?
+					gIF_IPV6 : gIF_IPV6_ULA_GUA,
+				"]:", LOCAL_PORT_V6, "/>",
+				"NT: upnp:event",
+				"TIMEOUT: Second-", timeout_str);
+		} else {
+			return_code = http_MakeMessage(
+				&request, 1, 1,
+				"q" "sssdsc" "sc" "sscc",
+				HTTPMETHOD_SUBSCRIBE, &dest_url,
+				"CALLBACK: <http://", lanaddr, ":", _CPE_PORT, "/>",
+				"NT: upnp:event",
+				"TIMEOUT: Second-", timeout_str);
+		}
+	}
+	if (return_code != 0) {
+		return return_code;
+	}
+
+	/* send request and get reply */
+	return_code = http_RequestAndResponse(&dest_url, request.buf,
+		request.length,
+		HTTPMETHOD_SUBSCRIBE,
+		HTTP_DEFAULT_TIMEOUT,
+		&response);
+	membuffer_destroy(&request);
+
+	if (return_code != 0) {
+		httpmsg_destroy(&response.msg);
+
+		return return_code;
+	}
+	if (response.msg.status_code != HTTP_OK) {
+		httpmsg_destroy(&response.msg);
+
+		return UPNP_E_SUBSCRIBE_UNACCEPTED;
+	}
+
+	/* get SID and TIMEOUT */
+	if (httpmsg_find_hdr(&response.msg, HDR_SID, &sid_hdr) == NULL ||
+	    sid_hdr.length == 0 ||
+	    httpmsg_find_hdr( &response.msg, HDR_TIMEOUT, &timeout_hdr ) == NULL ||
+	    timeout_hdr.length == 0 ) {
+		httpmsg_destroy( &response.msg );
+
+		return UPNP_E_BAD_RESPONSE;
+	}
+
+	/* save timeout */
+	parse_ret = matchstr(timeout_hdr.buf, timeout_hdr.length, "%iSecond-%d%0", timeout);
+	if (parse_ret == PARSE_OK) {
+		/* nothing to do */
+	} else if (memptr_cmp_nocase(&timeout_hdr, "Second-infinite") == 0) {
+		*timeout = -1;
+	} else {
+		httpmsg_destroy( &response.msg );
+
+		return UPNP_E_BAD_RESPONSE;
+	}
+  /* save SID */
+	UpnpString_set_StringN(sid, sid_hdr.buf, sid_hdr.length);
+	if (UpnpString_get_String(sid) == NULL) {
+		httpmsg_destroy(&response.msg);
+
+		return UPNP_E_OUTOF_MEMORY;
+	}
+	httpmsg_destroy(&response.msg);
+
+	return UPNP_E_SUCCESS;
 }

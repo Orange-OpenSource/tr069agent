@@ -76,6 +76,10 @@ else
   CWMP_USED_LIBRARY_FLAGS = -lpthread -lcurl
 endif
 
+ifeq ($(IGD_ENABLE),Y)
+	CWMP_USED_LIBRARY_FLAGS += -L$(LOCAL_DIR)/dm_target_implementation/$(TargetName)/dm_target_nat/upnpigd/inc/ -lpupnp
+endif
+
 # Debug Flag. Default value is NO DEBUG and optimization set to -Os
 # To turn on debug: make Target=xxxx DEBUG=Y
 DEFAULT_DEBUG_FLAG    = N
@@ -163,7 +167,8 @@ endif
 
 ifeq ($(IGD_ENABLE), Y)
   CWMP_C_FLAGS += -DIGD_ENABLED_ON_TR069_AGENT
-  CWMP_INC  += -I$(LOCAL_DIR)/dm_target_implementation/$(TargetName)/dm_target_nat/upnpigd/inc
+  CWMP_INC  += -I$(LOCAL_DIR)/dm_target_implementation/$(TargetName)/dm_target_nat/upnpigd/inc/miniupnp
+	CWMP_INC  += -I$(LOCAL_DIR)/dm_target_implementation/$(TargetName)/dm_target_nat/upnpigd/inc/pupnp
 endif
 # ---------------------------------------------------------------------------
 #               PRIVATE CONFIGURATION - END (NO NEED TO CHANGE)
@@ -193,7 +198,7 @@ dm_target_nat_stun            = dm_target_implementation/$(TargetName)/dm_target
 dm_target_nat_upnpigd         = dm_target_implementation/$(TargetName)/dm_target_nat/upnpigd/
 
 all:	$(CWMP_APPLICATION_NAME)
-	
+
 $(CWMP_APPLICATION_NAME):
 	mkdir -p $(REP_OBJ)
 	echo $(dm_target_com_path)
@@ -201,7 +206,7 @@ $(CWMP_APPLICATION_NAME):
 ifeq ($(DBUS_IPC_ENABLE), Y)
 	(cd dm_ipc && $(MAKE))
 endif
-	(cd $(dm_target_common_path) && $(MAKE))	
+	(cd $(dm_target_common_path) && $(MAKE))
 	(cd $(dm_target_com_path) && $(MAKE))
 	(cd $(dm_target_ixml_path) && $(MAKE))
 	(cd $(dm_target_deviceAdapter_path) && $(MAKE))
@@ -225,7 +230,7 @@ clean :
 	@echo "Cleaning..."
 	@(cd dm_com && $(MAKE) $@)
 	@(cd dm_ipc && $(MAKE) $@)
-	(cd $(dm_target_common_path) && $(MAKE) $@)	
+	(cd $(dm_target_common_path) && $(MAKE) $@)
 	(cd $(dm_target_com_path) && $(MAKE) $@)
 	(cd $(dm_target_ixml_path) && $(MAKE) $@)
 	(cd $(dm_target_deviceAdapter_path) && $(MAKE) $@)
