@@ -1,0 +1,16 @@
+
+This is a branch for UPnP IGD integration using miniupnp library.
+
+Done:
+  1. Included miniupnp library in dm_target_nat/inc.
+
+  2. Created a upnpigd thread.
+     Function DM_IGD_buildConnectionRequestUrl is called to build ConnectionRequestURL every time an Inform message is constructed.
+     This function checks the presence of gateway and creates a port mapping if possible.
+     Function refreshLeaseDuration is used to refresh Lease Duration before port mapping expires.
+
+ToDo:
+  1. Integrate Eventing mechanism. miniupnp library is not working properly with Eventing. Pupnp library is to be tested in branch subscribe_dev.
+
+  2. Implement mechanism to re-create port mapping in these conditions:
+      Gateway reboots or ExternalIPAddress changes.
