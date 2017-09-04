@@ -1,0 +1,19 @@
+
+
+This is a branch for integrating Eventing mechanism by including pupnp library.
+This branch is on the base of branch upnpigd_integration.
+
+A static pupnp library is included in dm_target_nat/inc. This pupnp library has not been minimized.
+
+This library allows the upnpigd_thread to subscribe a certain service and receive notifications.
+Function used is gena_subscribe() in dm_upnpigd.c. This is a function defined in pupnp library.
+
+Todo:
+ 1. ExternalIPAddress change scenario: Analyses notification messages (GENA). Principally decode XML message (notification message expressed in xml)
+    and create a mechanism to re-create port mapping if received a notification about ExternalIPAddress changes.
+
+ 2. Gateway reboot scenario: Analyses multicast event message (SSDP). when a gateway reboots, gateway sends multicast event messages SSDP:byebye.
+    And when gateway re-joins network, gateway announces its presence by multicast event messages too, SSDP:alive. Create a mechanism to re-create
+    port mapping if received multicast event messages SSDP:byebye.
+
+ 3. Minimize pupnp library: only include the source code of necessary, delete unneeded ones. 
